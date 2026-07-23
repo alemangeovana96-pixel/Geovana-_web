@@ -978,3 +978,24 @@ body{ top:0 !important; }
   padding:6px 11px; border-radius:999px; cursor:pointer; transition:all .2s ease;
 }
 .lang-switch button.active{ background:var(--violet); color:#fff; }
+
+/* ---------- Cintas glossy animadas (fondo de portadas) ---------- */
+.ribbon-bg{
+  position:absolute; inset:-15% -10%; z-index:0;
+  pointer-events:none; opacity:0.55;
+  background-image:url('assets/ribbon-bg.svg');
+  background-size:130% auto; background-repeat:no-repeat; background-position:center;
+  mix-blend-mode:screen;
+  animation: ribbonDrift 26s ease-in-out infinite;
+  filter:blur(0.3px);
+}
+.dark-hero .ribbon-bg{ opacity:0.7; }
+.page-hero{ position:relative; overflow:hidden; }
+.page-hero .ribbon-bg{ opacity:0.35; }
+@keyframes ribbonDrift{
+  0%,100%{ transform:translate(0,0) rotate(0deg) scale(1); }
+  33%{ transform:translate(-2%,1.5%) rotate(1.2deg) scale(1.03); }
+  66%{ transform:translate(1.5%,-1%) rotate(-1deg) scale(1.015); }
+}
+@media (prefers-reduced-motion: reduce){ .ribbon-bg{ animation:none; } }
+@media (max-width:700px){ .ribbon-bg{ opacity:0.35; } .dark-hero .ribbon-bg{ opacity:0.45; } }

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 800">
+  <defs>
+    <linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c3b2ff"/>
+      <stop offset="35%" stop-color="#7c4dff"/>
+      <stop offset="70%" stop-color="#241f5e"/>
+      <stop offset="100%" stop-color="#0d0a1f"/>
+    </linearGradient>
+    <linearGradient id="rg2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9ec6ff"/>
+      <stop offset="40%" stop-color="#7c4dff"/>
+      <stop offset="80%" stop-color="#241f5e"/>
+      <stop offset="100%" stop-color="#0d0a1f"/>
+    </linearGradient>
+    <linearGradient id="hl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M -100 620 C 150 500, 250 250, 480 260 C 700 270, 680 560, 900 540 C 1100 520, 1120 250, 1400 200"
+        fill="none" stroke="url(#rg1)" stroke-width="150" stroke-linecap="round"/>
+  <path d="M -100 620 C 150 500, 250 250, 480 260 C 700 270, 680 560, 900 540 C 1100 520, 1120 250, 1400 200"
+        fill="none" stroke="url(#hl)" stroke-width="150" stroke-linecap="round" opacity="0.5"/>
+
+  <path d="M -50 120 C 200 80, 300 320, 560 300 C 820 280, 850 60, 1150 90 C 1320 108, 1380 260, 1500 300"
+        fill="none" stroke="url(#rg2)" stroke-width="110" stroke-linecap="round" opacity="0.85"/>
+  <path d="M -50 120 C 200 80, 300 320, 560 300 C 820 280, 850 60, 1150 90 C 1320 108, 1380 260, 1500 300"
+        fill="none" stroke="url(#hl)" stroke-width="110" stroke-linecap="round" opacity="0.4"/>
+
+  <path d="M 200 800 C 350 700, 400 560, 620 600 C 820 636, 860 480, 1080 500 C 1250 516, 1300 680, 1480 660"
+        fill="none" stroke="url(#rg1)" stroke-width="90" stroke-linecap="round" opacity="0.6"/>
+</svg>
