@@ -936,8 +936,14 @@ footer{ padding:56px 0 34px; border-top:1px solid var(--line); }
 .blog-card .blog-thumb{
   aspect-ratio:16/10; background:linear-gradient(150deg, var(--deep), var(--violet) 70%, var(--lilac));
   display:flex; align-items:center; justify-content:center;
+  position:relative; overflow:hidden;
 }
-.blog-card .blog-thumb svg{ width:40px; height:40px; stroke:#fff; fill:none; stroke-width:1.4; opacity:0.85; }
+.blog-card .blog-thumb::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(150deg, rgba(36,31,94,0.55), rgba(124,77,255,0.35) 70%, rgba(195,178,255,0.2));
+  mix-blend-mode:multiply;
+}
+.blog-card .blog-thumb svg{ width:40px; height:40px; stroke:#fff; fill:none; stroke-width:1.4; opacity:0.85; position:relative; z-index:1; }
 .blog-card .blog-body{ padding:26px; }
 .blog-card .blog-date{ font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--violet); margin-bottom:10px; display:block; }
 .blog-card h3{ font-family:'Fraunces',serif; font-weight:600; font-size:19px; margin-bottom:10px; line-height:1.25; }
@@ -963,10 +969,7 @@ footer{ padding:56px 0 34px; border-top:1px solid var(--line); }
 }
 @media (max-width:700px){ .blog-grid{ grid-template-columns:1fr; } }
 
-/* ---------- Selector de idioma (Google Translate) ---------- */
-#google_translate_element{ display:none; }
-.goog-te-banner-frame{ display:none !important; }
-body{ top:0 !important; }
+/* ---------- Selector de idioma (Weglot) ---------- */
 .lang-switch{
   display:flex; align-items:center; gap:2px;
   background:rgba(255,255,255,0.06); border:1px solid var(--line);
@@ -978,6 +981,8 @@ body{ top:0 !important; }
   padding:6px 11px; border-radius:999px; cursor:pointer; transition:all .2s ease;
 }
 .lang-switch button.active{ background:var(--violet); color:#fff; }
+/* Oculta el switcher flotante propio de Weglot; usamos nuestros botones */
+.weglot-container, .wg-drop, #weglot_but{ display:none !important; }
 
 /* ---------- Cintas glossy animadas (fondo de portadas) ---------- */
 .ribbon-bg{
@@ -999,3 +1004,108 @@ body{ top:0 !important; }
 }
 @media (prefers-reduced-motion: reduce){ .ribbon-bg{ animation:none; } }
 @media (max-width:700px){ .ribbon-bg{ opacity:0.35; } .dark-hero .ribbon-bg{ opacity:0.45; } }
+
+/* ---------- Carrusel de servicios (solo en Home) ---------- */
+.services-carousel{
+  position:relative; overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image:linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+.services-track{
+  display:flex; gap:20px; width:max-content;
+  animation: servicesScroll 34s linear infinite;
+}
+.services-carousel:hover .services-track{ animation-play-state:paused; }
+@keyframes servicesScroll{
+  from{ transform:translateX(0); }
+  to{ transform:translateX(-50%); }
+}
+.sc-card{
+  width:270px; flex:0 0 270px;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:22px; padding:32px 26px;
+  transition:transform .3s ease, background .3s ease, border-color .3s ease;
+}
+.sc-card:hover{ transform:translateY(-6px); background:rgba(124,77,255,0.08); border-color:rgba(124,77,255,0.35); }
+.sc-card h3{
+  font-family:'Manrope',sans-serif; font-weight:800; font-size:14.5px;
+  letter-spacing:0.02em; text-transform:uppercase; color:var(--ink); margin-bottom:8px;
+}
+.sc-card p{ font-size:13.5px; color:var(--muted); line-height:1.55; }
+@media (max-width:700px){
+  .sc-card{ width:230px; flex:0 0 230px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .services-track{ animation:none; }
+}
+
+/* ---------- FAQ (acordeón nativo) ---------- */
+.faq-list{ max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
+.faq-item{
+  border:1px solid var(--line); border-radius:16px; overflow:hidden;
+  background:rgba(255,255,255,0.035);
+}
+.faq-item summary{
+  list-style:none; cursor:pointer; padding:20px 24px;
+  display:flex; justify-content:space-between; align-items:center; gap:16px;
+  font-family:'Fraunces',serif; font-weight:600; font-size:16.5px; color:var(--ink);
+}
+.faq-item summary::-webkit-details-marker{ display:none; }
+.faq-item summary .chev{
+  flex:0 0 20px; width:20px; height:20px; color:var(--violet);
+  transition:transform .25s ease;
+}
+.faq-item[open] summary .chev{ transform:rotate(180deg); }
+.faq-item .faq-a{ padding:0 24px 22px; font-size:14.5px; color:var(--muted); line-height:1.7; }
+
+/* ---------- Overlay de detalle de servicio (compartido: Home + Servicios) ---------- */
+.svc-overlay{
+  position:fixed; inset:0; z-index:200;
+  background:rgba(8,7,15,0.75); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  opacity:0; visibility:hidden; transition:opacity .35s ease, visibility 0s linear .35s;
+}
+.svc-overlay.open{ opacity:1; visibility:visible; transition:opacity .35s ease; }
+.svc-panel{
+  position:relative; width:100%; max-width:640px; max-height:85vh; overflow-y:auto;
+  background:#14102c; border:1px solid rgba(255,255,255,0.14); border-radius:26px;
+  padding:44px; box-shadow:0 40px 90px -20px rgba(124,77,255,0.5);
+  transform:scale(0.85) translateY(14px); opacity:0;
+  transition:transform .4s cubic-bezier(.2,.9,.3,1.2), opacity .3s ease;
+}
+.svc-overlay.open .svc-panel{ transform:scale(1) translateY(0); opacity:1; }
+.svc-panel-close{
+  position:absolute; top:20px; right:20px; width:38px; height:38px; border-radius:50%;
+  background:rgba(255,255,255,0.08); border:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink);
+  transition:all .2s ease;
+}
+.svc-panel-close:hover{ background:var(--violet); border-color:var(--violet); }
+.svc-panel-close svg{ width:16px; height:16px; }
+.svc-panel .s-icon{ width:60px; height:60px; margin-bottom:20px; }
+.svc-panel .s-icon svg{ width:28px; height:28px; }
+.svc-panel h3{ font-family:'Fraunces',serif; font-weight:600; font-size:26px; margin-bottom:14px; }
+.svc-panel p{ font-size:15px; color:var(--muted); line-height:1.75; margin-bottom:20px; }
+.svc-panel .svc-ideal{
+  border-left:3px solid var(--violet); padding:4px 0 4px 18px;
+  font-size:14px; color:var(--ink);
+}
+.svc-panel .svc-ideal b{ display:block; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--lilac); margin-bottom:6px; font-weight:700; }
+.svc-panel .svc-cta{ margin-top:26px; }
+
+/* ---------- Lista de servicios (Servicios.html) ---------- */
+.services-list{ display:flex; flex-direction:column; gap:14px; max-width:760px; margin:0 auto; }
+.svc-row{
+  display:flex; align-items:center; gap:20px; padding:22px 26px;
+  background:rgba(255,255,255,0.035); border:1px solid var(--line); border-radius:18px;
+  cursor:pointer; transition:all .25s ease;
+}
+.svc-row:hover{ background:rgba(124,77,255,0.07); border-color:rgba(124,77,255,0.35); transform:translateX(4px); }
+.svc-row .s-icon{ flex:0 0 52px; margin-bottom:0; }
+.svc-row .svc-row-text{ flex:1; }
+.svc-row h3{ font-family:'Manrope',sans-serif; font-weight:800; font-size:15px; text-transform:uppercase; letter-spacing:0.02em; margin-bottom:4px; }
+.svc-row p{ font-size:13.5px; color:var(--muted); }
+.svc-row .svc-row-arrow{ flex:0 0 20px; color:var(--lilac); transition:transform .25s ease; }
+.svc-row:hover .svc-row-arrow{ transform:translateX(4px); }
