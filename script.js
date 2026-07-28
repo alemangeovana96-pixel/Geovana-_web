@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Animaciones al hacer scroll (se aplican automáticamente a bloques comunes)
-  var autoSelectors = '.section-head, .s-card, .p-card, .stat-box, .stat, .t-item, .t-card, .p-step, .about-photo, .about-text, .hero-frame-wrap, .contact-info, form, .calendar-block';
+  var autoSelectors = '.section-head, .s-card, .p-card, .stat-box, .stat, .t-item, .t-card, .p-step, .about-photo, .about-text, .hero-frame-wrap, .contact-info, form, .calendar-block, .tool-chip, .skill-pill, .blog-card, .svc-row, .faq-item, .about-blob-wrap, .blob-wrap, .filter-bar';
   document.querySelectorAll(autoSelectors).forEach(function (el, i) {
     el.classList.add('reveal');
     el.style.transitionDelay = (Math.min(i % 6, 5) * 0.08) + 's';
@@ -50,6 +50,62 @@ document.addEventListener('DOMContentLoaded', function () {
   } else {
     revealEls.forEach(function (el) { el.classList.add('in'); });
   }
+
+  // Animación de conteo para las cifras (25+, 6+, 8...)
+  var counters = document.querySelectorAll('[data-count]');
+  if (counters.length) {
+    var countIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var el = entry.target;
+        var target = parseInt(el.getAttribute('data-count'), 10);
+        var suffix = el.getAttribute('data-suffix') || '';
+        var start = 0;
+        var duration = 1100;
+        var startTime = null;
+        function step(ts) {
+          if (!startTime) startTime = ts;
+          var progress = Math.min((ts - startTime) / duration, 1);
+          var eased = 1 - Math.pow(1 - progress, 3);
+          var val = Math.round(start + (target - start) * eased);
+          el.textContent = val + suffix;
+          if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+        countIO.unobserve(el);
+      });
+    }, { threshold: 0.4 });
+    counters.forEach(function (el) { countIO.observe(el); });
+  }
+
+  // Acordeón FAQ con animación suave de alto
+  document.querySelectorAll('.faq-item').forEach(function (item) {
+    var summary = item.querySelector('summary');
+    var answer = item.querySelector('.faq-a');
+    if (!summary || !answer) return;
+    summary.addEventListener('click', function (e) {
+      e.preventDefault();
+      var isOpen = item.hasAttribute('open');
+      document.querySelectorAll('.faq-item[open]').forEach(function (openItem) {
+        if (openItem !== item) {
+          var a = openItem.querySelector('.faq-a');
+          a.style.maxHeight = a.scrollHeight + 'px';
+          requestAnimationFrame(function () { a.style.maxHeight = '0px'; });
+          setTimeout(function () { openItem.removeAttribute('open'); }, 280);
+        }
+      });
+      if (isOpen) {
+        answer.style.maxHeight = answer.scrollHeight + 'px';
+        requestAnimationFrame(function () { answer.style.maxHeight = '0px'; });
+        setTimeout(function () { item.removeAttribute('open'); }, 280);
+      } else {
+        item.setAttribute('open', '');
+        answer.style.maxHeight = '0px';
+        requestAnimationFrame(function () { answer.style.maxHeight = answer.scrollHeight + 'px'; });
+        setTimeout(function () { answer.style.maxHeight = ''; }, 300);
+      }
+    });
+  });
 });
 
 /* ---------- Selector de idioma ES / EN (Weglot) ---------- */
