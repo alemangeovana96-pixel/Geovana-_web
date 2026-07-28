@@ -112,39 +112,39 @@ document.addEventListener('DOMContentLoaded', function () {
 var SERVICE_DATA = {
   identidad: {
     icon: '<svg viewBox="0 0 24 24"><path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z" stroke-linejoin="round"/></svg>',
-    title: 'Identidad visual',
-    desc: 'Logotipo, paleta, tipografía y manual de marca completo: el sistema visual que hace que te reconozcan a la primera.',
-    ideal: 'Negocios nuevos, o marcas que quieren renovar su imagen desde cero.'
+    title: 'Visual identity',
+    desc: 'Logo, color palette, typography and a complete brand manual: the visual system that makes you recognizable at a glance.',
+    ideal: 'New businesses, or brands that want to rebuild their image from scratch.'
   },
   digital: {
     icon: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4" stroke-linecap="round"/></svg>',
-    title: 'Diseño digital',
-    desc: 'Piezas para redes, web y presentaciones, pensadas para tu audiencia y para cómo se consume contenido hoy.',
-    ideal: 'Marcas activas en redes que necesitan contenido constante y coherente.'
+    title: 'Digital design',
+    desc: 'Pieces for social media, web and presentations, designed for your audience and for how content is consumed today.',
+    ideal: 'Brands active on social media that need constant, coherent content.'
   },
   impreso: {
     icon: '<svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a1 1 0 01-1-1v-6a1 1 0 011-1h16a1 1 0 011 1v6a1 1 0 01-1 1h-2M6 14h12v7H6z" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    title: 'Material impreso',
-    desc: 'Tarjetas, folletos, empaques y señalética: diseño que se sostiene igual de bien en papel que en pantalla.',
-    ideal: 'Negocios con presencia física — tiendas, oficinas, eventos.'
+    title: 'Printed material',
+    desc: 'Business cards, brochures, packaging and signage: design that holds up just as well on paper as on screen.',
+    ideal: 'Businesses with a physical presence — stores, offices, events.'
   },
   editorial: {
     icon: '<svg viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-1v13c3-1 6-.5 8 1 2-1.5 5-2 8-1V5c-3-1-6-.5-8 1zM12 6v13" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    title: 'Diseño editorial',
-    desc: 'Revistas, catálogos, libros y reportes maquetados con una jerarquía clara y una lectura cómoda.',
-    ideal: 'Empresas que publican catálogos, revistas o reportes con regularidad.'
+    title: 'Editorial design',
+    desc: 'Magazines, catalogs, books and reports laid out with clear hierarchy and comfortable reading.',
+    ideal: 'Companies that regularly publish catalogs, magazines or reports.'
   },
   community: {
     icon: '<svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    title: 'Community manager',
-    desc: 'Calendario de contenido, diseño de publicaciones y gestión de tus redes para que tu marca hable todos los días.',
-    ideal: 'Marcas que quieren delegar sus redes sin perder coherencia visual.'
+    title: 'Community management',
+    desc: 'Content calendar, post design and social media management so your brand shows up every day.',
+    ideal: 'Brands that want to hand off their social media without losing visual coherence.'
   },
   branding: {
     icon: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-4 2-2 4 4-2 2-4z" stroke-linejoin="round"/></svg>',
-    title: 'Branding & estrategia',
-    desc: 'Diagnóstico de marca y plan de acción: hacia dónde va tu marca y cómo se ve cada paso del camino.',
-    ideal: 'Marcas ya establecidas que sienten que su imagen ya no las representa.'
+    title: 'Branding & strategy',
+    desc: 'Brand diagnosis and action plan: where your brand is headed and what each step looks like.',
+    ideal: 'Established brands that feel their image no longer represents them.'
   }
 };
 
