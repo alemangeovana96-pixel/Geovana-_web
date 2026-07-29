@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Animaciones al hacer scroll (se aplican automáticamente a bloques comunes)
-  var autoSelectors = '.section-head, .s-card, .p-card, .stat-box, .stat, .t-item, .t-card, .p-step, .about-photo, .about-text, .hero-frame-wrap, .contact-info, form, .calendar-block, .tool-chip, .skill-pill, .blog-card, .svc-row, .faq-item, .about-blob-wrap, .blob-wrap, .filter-bar';
+  var autoSelectors = '.section-head, .s-card, .p-card, .stat-box, .stat, .t-item, .t-card, .p-step, .path-step, .about-photo, .about-text, .hero-frame-wrap, .contact-info, form, .calendar-block, .tool-chip, .skill-pill, .blog-card, .svc-row, .faq-item, .about-blob-wrap, .blob-wrap, .filter-bar';
   document.querySelectorAll(autoSelectors).forEach(function (el, i) {
     el.classList.add('reveal');
     el.style.transitionDelay = (Math.min(i % 6, 5) * 0.08) + 's';
