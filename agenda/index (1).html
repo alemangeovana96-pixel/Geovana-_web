@@ -78,6 +78,11 @@ const STATUS = {
   completado: { label: "Completado", color: "#34d399", bg: "rgba(52,211,153,0.14)", ring: "rgba(52,211,153,0.4)" },
 };
 const TIPO_TAREA = { curso: "Curso / certificado", personal: "Personal", administrativo: "Administrativo", otro: "Otro" };
+const CATEGORIA_CLIENTE = {
+  activo: { label: "Activo", color: "#34d399", bg: "rgba(52,211,153,0.14)" },
+  anterior: { label: "Anterior", color: "#9d8fc7", bg: "rgba(157,143,199,0.14)" },
+  prospecto: { label: "Prospecto", color: "#fbbf24", bg: "rgba(251,191,36,0.14)" },
+};
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 const inputStyle = {
@@ -174,13 +179,21 @@ function ClientForm({ initial, onSave, onClose }) {
   const [empresa, setEmpresa] = useState(initial?.empresa || "");
   const [email, setEmail] = useState(initial?.email || "");
   const [telefono, setTelefono] = useState(initial?.telefono || "");
+  const [categoria, setCategoria] = useState(initial?.categoria || "activo");
   return (
     <Modal title={initial ? "Editar cliente" : "Nuevo cliente"} onClose={onClose}>
       <Field label="Nombre"><input style={inputStyle} value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre del cliente" /></Field>
       <Field label="Empresa / marca"><input style={inputStyle} value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Opcional" /></Field>
       <Field label="Correo"><input style={inputStyle} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.com" /></Field>
       <Field label="Teléfono"><input style={inputStyle} value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="+504" /></Field>
-      <button disabled={!nombre.trim()} onClick={() => { onSave({ id: initial?.id || uid(), nombre: nombre.trim(), empresa: empresa.trim(), email: email.trim(), telefono: telefono.trim(), colaboradores: initial?.colaboradores || [] }); onClose(); }} style={{ width: "100%", marginTop: 6, padding: "13px", borderRadius: 12, border: "none", background: nombre.trim() ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: nombre.trim() ? "pointer" : "not-allowed" }}>Guardar cliente</button>
+      <Field label="Categoría">
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {Object.entries(CATEGORIA_CLIENTE).map(([key, c]) => (
+            <button key={key} onClick={() => setCategoria(key)} style={{ padding: "8px 13px", borderRadius: 999, fontSize: 13, fontWeight: 600, border: categoria === key ? `1.5px solid ${c.color}` : "1.5px solid rgba(255,255,255,0.1)", background: categoria === key ? c.bg : "rgba(255,255,255,0.03)", color: categoria === key ? c.color : "#9d8fc7", cursor: "pointer" }}>{c.label}</button>
+          ))}
+        </div>
+      </Field>
+      <button disabled={!nombre.trim()} onClick={() => { onSave({ id: initial?.id || uid(), nombre: nombre.trim(), empresa: empresa.trim(), email: email.trim(), telefono: telefono.trim(), categoria, colaboradores: initial?.colaboradores || [] }); onClose(); }} style={{ width: "100%", marginTop: 6, padding: "13px", borderRadius: 12, border: "none", background: nombre.trim() ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: nombre.trim() ? "pointer" : "not-allowed" }}>Guardar cliente</button>
     </Modal>
   );
 }
@@ -401,6 +414,7 @@ function App({ userId, onLogout }) {
   const [editTask, setEditTask] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [search, setSearch] = useState("");
+  const [filtroCategoria, setFiltroCategoria] = useState("todos");
 
   const today = new Date();
   const viewDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
@@ -416,7 +430,9 @@ function App({ userId, onLogout }) {
     return [...fromProjects, ...fromTasks].sort((a, b) => a.recordatorioFecha.localeCompare(b.recordatorioFecha)).slice(0, 6);
   }, [projects, tasks, clientMap]);
 
-  const filteredClients = clients.filter((c) => c.nombre.toLowerCase().includes(search.toLowerCase()) || (c.empresa || "").toLowerCase().includes(search.toLowerCase()));
+  const filteredClients = clients
+    .filter((c) => c.nombre.toLowerCase().includes(search.toLowerCase()) || (c.empresa || "").toLowerCase().includes(search.toLowerCase()))
+    .filter((c) => filtroCategoria === "todos" || (c.categoria || "activo") === filtroCategoria);
   const deleteProject = (id) => saveProjects(projects.filter((p) => p.id !== id));
   const deleteTask = (id) => saveTasks(tasks.filter((t) => t.id !== id));
   const deleteClient = (id) => { const nc = clients.filter((c) => c.id !== id); const np = projects.filter((p) => p.clientId !== id); setClients(nc); setProjects(np); persist({ clients: nc, projects: np, tasks }); if (selectedClient?.id === id) setSelectedClient(null); };
@@ -472,20 +488,29 @@ function App({ userId, onLogout }) {
 
       {tab === "clients" && !selectedClient && (
         <div style={{ padding: "6px 18px" }}>
-          <div style={{ position: "relative", marginBottom: 16 }}>
+          <div style={{ position: "relative", marginBottom: 12 }}>
             <ISearch size={15} style={{ position: "absolute", left: 13, top: 13, color: "#6b5f92" }} />
             <input style={{ ...inputStyle, paddingLeft: 36 }} placeholder="Buscar cliente…" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
+          <div style={{ display: "flex", gap: 7, marginBottom: 16, overflowX: "auto", paddingBottom: 2 }}>
+            {[["todos", "Todos"], ...Object.entries(CATEGORIA_CLIENTE).map(([k, c]) => [k, c.label])].map(([key, label]) => (
+              <button key={key} onClick={() => setFiltroCategoria(key)} style={{ flexShrink: 0, padding: "7px 13px", borderRadius: 999, fontSize: 12.5, fontWeight: 600, border: filtroCategoria === key ? "1.5px solid #a78bfa" : "1.5px solid rgba(255,255,255,0.1)", background: filtroCategoria === key ? "rgba(167,139,250,0.14)" : "rgba(255,255,255,0.03)", color: filtroCategoria === key ? "#c4b5fd" : "#9d8fc7", cursor: "pointer", whiteSpace: "nowrap" }}>{label}</button>
+            ))}
+          </div>
           {filteredClients.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "50px 20px", color: "#6b5f92", fontSize: 13.5 }}>Aún no tienes clientes. Agrega el primero.</div>
+            <div style={{ textAlign: "center", padding: "50px 20px", color: "#6b5f92", fontSize: 13.5 }}>{clients.length === 0 ? "Aún no tienes clientes. Agrega el primero." : "No hay clientes en esta categoría."}</div>
           ) : (
             filteredClients.map((c) => {
               const cP = projects.filter((p) => p.clientId === c.id);
               const urgentes = cP.filter((p) => p.status === "urgente").length;
+              const cat = CATEGORIA_CLIENTE[c.categoria || "activo"];
               return (
                 <div key={c.id} onClick={() => setSelectedClient(c)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(196,181,253,0.15)", borderRadius: 16, padding: 14, marginBottom: 10, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 15.5 }}>{c.nombre}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15.5 }}>{c.nombre}</div>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, color: cat.color, background: cat.bg, padding: "2px 8px", borderRadius: 999 }}>{cat.label}</span>
+                    </div>
                     {c.empresa && <div style={{ fontSize: 12.5, color: "#9d8fc7", marginTop: 2 }}>{c.empresa}</div>}
                     <div style={{ fontSize: 11.5, color: "#6b5f92", marginTop: 5, display: "flex", gap: 10 }}>
                       <span><IBriefcase size={11} style={{ verticalAlign: -1, marginRight: 3 }} />{cP.length} proyecto{cP.length !== 1 ? "s" : ""}</span>
@@ -504,7 +529,8 @@ function App({ userId, onLogout }) {
         <div style={{ padding: "6px 18px" }}>
           <button onClick={() => setSelectedClient(null)} style={{ background: "none", border: "none", color: "#a78bfa", fontSize: 13, marginBottom: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0 }}><IChevronL size={15} /> Todos los clientes</button>
           <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(196,181,253,0.15)", borderRadius: 16, padding: 14, marginBottom: 18 }}>
-            {selectedClient.empresa && <div style={{ fontSize: 13, color: "#c4b5fd" }}>{selectedClient.empresa}</div>}
+            <span style={{ fontSize: 11, fontWeight: 700, color: CATEGORIA_CLIENTE[selectedClient.categoria || "activo"].color, background: CATEGORIA_CLIENTE[selectedClient.categoria || "activo"].bg, padding: "3px 10px", borderRadius: 999 }}>{CATEGORIA_CLIENTE[selectedClient.categoria || "activo"].label}</span>
+            {selectedClient.empresa && <div style={{ fontSize: 13, color: "#c4b5fd", marginTop: 8 }}>{selectedClient.empresa}</div>}
             {selectedClient.email && <div style={{ fontSize: 12.5, color: "#9d8fc7", marginTop: 4 }}>{selectedClient.email}</div>}
             {selectedClient.telefono && <div style={{ fontSize: 12.5, color: "#9d8fc7", marginTop: 2 }}>{selectedClient.telefono}</div>}
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
