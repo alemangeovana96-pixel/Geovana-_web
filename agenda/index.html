@@ -91,6 +91,26 @@ const inputStyle = {
   color: "#ede9fe", fontSize: 14.5, fontFamily: "'Manrope', sans-serif", outline: "none",
 };
 
+function formatReminder(fecha, hora) {
+  const fechaTxt = new Date(fecha + "T00:00:00").toLocaleDateString("es-HN", { day: "numeric", month: "short" });
+  if (!hora) return fechaTxt;
+  const [h, m] = hora.split(":");
+  const d = new Date(); d.setHours(+h, +m);
+  const horaTxt = d.toLocaleTimeString("es-HN", { hour: "numeric", minute: "2-digit" });
+  return `${fechaTxt} · ${horaTxt}`;
+}
+
+function proximoCumple(cumpleanos) {
+  if (!cumpleanos) return null;
+  const [, mes, dia] = cumpleanos.split("-").map(Number);
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  let next = new Date(hoy.getFullYear(), mes - 1, dia);
+  if (next < hoy) next = new Date(hoy.getFullYear() + 1, mes - 1, dia);
+  const dias = Math.round((next - hoy) / 86400000);
+  const fechaTxt = next.toLocaleDateString("es-HN", { day: "numeric", month: "short" });
+  return { dias, fechaTxt };
+}
+
 /* ---------- pantalla de configuración faltante ---------- */
 function SetupNeeded() {
   return (
@@ -201,12 +221,14 @@ function CollaboratorForm({ onSave, onClose }) {
   const [nombre, setNombre] = useState("");
   const [rol, setRol] = useState("");
   const [contacto, setContacto] = useState("");
+  const [cumpleanos, setCumpleanos] = useState("");
   return (
     <Modal title="Nuevo colaborador" onClose={onClose}>
       <Field label="Nombre"><input style={inputStyle} value={nombre} onChange={(e) => setNombre(e.target.value)} /></Field>
       <Field label="Rol / puesto"><input style={inputStyle} value={rol} onChange={(e) => setRol(e.target.value)} placeholder="Ej. Encargado de marketing" /></Field>
       <Field label="Correo o teléfono"><input style={inputStyle} value={contacto} onChange={(e) => setContacto(e.target.value)} /></Field>
-      <button disabled={!nombre.trim()} onClick={() => { onSave({ id: uid(), nombre: nombre.trim(), rol: rol.trim(), contacto: contacto.trim() }); onClose(); }} style={{ width: "100%", marginTop: 6, padding: "13px", borderRadius: 12, border: "none", background: nombre.trim() ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: nombre.trim() ? "pointer" : "not-allowed" }}>Agregar colaborador</button>
+      <Field label="Cumpleaños (opcional)"><input type="date" style={inputStyle} value={cumpleanos} onChange={(e) => setCumpleanos(e.target.value)} /></Field>
+      <button disabled={!nombre.trim()} onClick={() => { onSave({ id: uid(), nombre: nombre.trim(), rol: rol.trim(), contacto: contacto.trim(), cumpleanos }); onClose(); }} style={{ width: "100%", marginTop: 6, padding: "13px", borderRadius: 12, border: "none", background: nombre.trim() ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: nombre.trim() ? "pointer" : "not-allowed" }}>Agregar colaborador</button>
     </Modal>
   );
 }
@@ -216,6 +238,7 @@ function ProjectForm({ clientId, initial, onSave, onClose }) {
   const [status, setStatus] = useState(initial?.status || "proceso");
   const [fechaEntrega, setFechaEntrega] = useState(initial?.fechaEntrega || "");
   const [recordatorioFecha, setRecordatorioFecha] = useState(initial?.recordatorioFecha || "");
+  const [recordatorioHora, setRecordatorioHora] = useState(initial?.recordatorioHora || "");
   const [recordatorioNota, setRecordatorioNota] = useState(initial?.recordatorioNota || "");
   return (
     <Modal title={initial ? "Editar proyecto" : "Nuevo proyecto"} onClose={onClose}>
@@ -223,9 +246,14 @@ function ProjectForm({ clientId, initial, onSave, onClose }) {
       <Field label="Descripción"><textarea style={{ ...inputStyle, minHeight: 70, resize: "vertical" }} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} /></Field>
       <Field label="Estado"><StatusPicker value={status} onChange={setStatus} /></Field>
       <Field label="Fecha de entrega"><input type="date" style={inputStyle} value={fechaEntrega} onChange={(e) => setFechaEntrega(e.target.value)} /></Field>
-      <Field label="Recordatorio (fecha)"><input type="date" style={inputStyle} value={recordatorioFecha} onChange={(e) => setRecordatorioFecha(e.target.value)} /></Field>
-      <Field label="Nota del recordatorio"><input style={inputStyle} value={recordatorioNota} onChange={(e) => setRecordatorioNota(e.target.value)} placeholder="Ej. Enviar avance al cliente" /></Field>
-      <button disabled={!nombre.trim() || !fechaEntrega} onClick={() => { onSave({ id: initial?.id || uid(), clientId, nombre: nombre.trim(), descripcion: descripcion.trim(), status, fechaEntrega, recordatorioFecha, recordatorioNota: recordatorioNota.trim() }); onClose(); }} style={{ width: "100%", marginTop: 6, padding: "13px", borderRadius: 12, border: "none", background: (nombre.trim() && fechaEntrega) ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: (nombre.trim() && fechaEntrega) ? "pointer" : "not-allowed" }}>Guardar proyecto</button>
+      <Field label="Recordatorio / reunión">
+        <div style={{ display: "flex", gap: 8 }}>
+          <input type="date" style={inputStyle} value={recordatorioFecha} onChange={(e) => setRecordatorioFecha(e.target.value)} />
+          <input type="time" style={{ ...inputStyle, maxWidth: 120 }} value={recordatorioHora} onChange={(e) => setRecordatorioHora(e.target.value)} />
+        </div>
+      </Field>
+      <Field label="Nota del recordatorio"><input style={inputStyle} value={recordatorioNota} onChange={(e) => setRecordatorioNota(e.target.value)} placeholder="Ej. Reunión de avance con el cliente" /></Field>
+      <button disabled={!nombre.trim() || !fechaEntrega} onClick={() => { onSave({ id: initial?.id || uid(), clientId, nombre: nombre.trim(), descripcion: descripcion.trim(), status, fechaEntrega, recordatorioFecha, recordatorioHora, recordatorioNota: recordatorioNota.trim() }); onClose(); }} style={{ width: "100%", marginTop: 6, padding: "13px", borderRadius: 12, border: "none", background: (nombre.trim() && fechaEntrega) ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: (nombre.trim() && fechaEntrega) ? "pointer" : "not-allowed" }}>Guardar proyecto</button>
     </Modal>
   );
 }
@@ -236,6 +264,7 @@ function TaskForm({ initial, onSave, onClose }) {
   const [status, setStatus] = useState(initial?.status || "proceso");
   const [fecha, setFecha] = useState(initial?.fecha || "");
   const [recordatorioFecha, setRecordatorioFecha] = useState(initial?.recordatorioFecha || "");
+  const [recordatorioHora, setRecordatorioHora] = useState(initial?.recordatorioHora || "");
   const [recordatorioNota, setRecordatorioNota] = useState(initial?.recordatorioNota || "");
   return (
     <Modal title={initial ? "Editar actividad" : "Nueva actividad"} onClose={onClose}>
@@ -250,9 +279,14 @@ function TaskForm({ initial, onSave, onClose }) {
       </Field>
       <Field label="Estado"><StatusPicker value={status} onChange={setStatus} /></Field>
       <Field label="Fecha (opcional)"><input type="date" style={inputStyle} value={fecha} onChange={(e) => setFecha(e.target.value)} /></Field>
-      <Field label="Recordatorio (fecha)"><input type="date" style={inputStyle} value={recordatorioFecha} onChange={(e) => setRecordatorioFecha(e.target.value)} /></Field>
+      <Field label="Recordatorio / reunión">
+        <div style={{ display: "flex", gap: 8 }}>
+          <input type="date" style={inputStyle} value={recordatorioFecha} onChange={(e) => setRecordatorioFecha(e.target.value)} />
+          <input type="time" style={{ ...inputStyle, maxWidth: 120 }} value={recordatorioHora} onChange={(e) => setRecordatorioHora(e.target.value)} />
+        </div>
+      </Field>
       <Field label="Nota del recordatorio"><input style={inputStyle} value={recordatorioNota} onChange={(e) => setRecordatorioNota(e.target.value)} placeholder="Ej. Retomar clases de inglés" /></Field>
-      <button disabled={!nombre.trim()} onClick={() => { onSave({ id: initial?.id || uid(), nombre: nombre.trim(), descripcion: descripcion.trim(), tipo, status, fecha, recordatorioFecha, recordatorioNota: recordatorioNota.trim() }); onClose(); }} style={{ width: "100%", marginTop: 6, padding: "13px", borderRadius: 12, border: "none", background: nombre.trim() ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: nombre.trim() ? "pointer" : "not-allowed" }}>Guardar actividad</button>
+      <button disabled={!nombre.trim()} onClick={() => { onSave({ id: initial?.id || uid(), nombre: nombre.trim(), descripcion: descripcion.trim(), tipo, status, fecha, recordatorioFecha, recordatorioHora, recordatorioNota: recordatorioNota.trim() }); onClose(); }} style={{ width: "100%", marginTop: 6, padding: "13px", borderRadius: 12, border: "none", background: nombre.trim() ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: nombre.trim() ? "pointer" : "not-allowed" }}>Guardar actividad</button>
     </Modal>
   );
 }
@@ -277,7 +311,7 @@ function ProjectCard({ project, clientName, onEdit, onDelete }) {
           <button onClick={onDelete} style={{ background: "rgba(251,113,133,0.1)", border: "none", borderRadius: 8, padding: 6, color: "#fb7185", cursor: "pointer" }}><ITrash size={13} /></button>
         </div>
       </div>
-      {project.recordatorioFecha && <div style={{ marginTop: 8, fontSize: 12, color: "#fbbf24", display: "flex", alignItems: "center", gap: 5 }}><IBell size={12} /> {new Date(project.recordatorioFecha + "T00:00:00").toLocaleDateString("es-HN", { day: "numeric", month: "short" })} — {project.recordatorioNota || "Recordatorio"}</div>}
+      {project.recordatorioFecha && <div style={{ marginTop: 8, fontSize: 12, color: "#fbbf24", display: "flex", alignItems: "center", gap: 5 }}><IBell size={12} /> {formatReminder(project.recordatorioFecha, project.recordatorioHora)} — {project.recordatorioNota || "Recordatorio"}</div>}
     </div>
   );
 }
@@ -300,7 +334,7 @@ function TaskCard({ task, onEdit, onDelete }) {
           <button onClick={onDelete} style={{ background: "rgba(251,113,133,0.1)", border: "none", borderRadius: 8, padding: 6, color: "#fb7185", cursor: "pointer" }}><ITrash size={13} /></button>
         </div>
       </div>
-      {task.recordatorioFecha && <div style={{ marginTop: 8, fontSize: 12, color: "#fbbf24", display: "flex", alignItems: "center", gap: 5 }}><IBell size={12} /> {new Date(task.recordatorioFecha + "T00:00:00").toLocaleDateString("es-HN", { day: "numeric", month: "short" })} — {task.recordatorioNota || "Recordatorio"}</div>}
+      {task.recordatorioFecha && <div style={{ marginTop: 8, fontSize: 12, color: "#fbbf24", display: "flex", alignItems: "center", gap: 5 }}><IBell size={12} /> {formatReminder(task.recordatorioFecha, task.recordatorioHora)} — {task.recordatorioNota || "Recordatorio"}</div>}
     </div>
   );
 }
@@ -427,8 +461,18 @@ function App({ userId, onLogout }) {
   const upcomingReminders = useMemo(() => {
     const fromProjects = projects.filter((p) => p.recordatorioFecha).map((p) => ({ ...p, _label: clientMap[p.clientId]?.nombre }));
     const fromTasks = tasks.filter((t) => t.recordatorioFecha);
-    return [...fromProjects, ...fromTasks].sort((a, b) => a.recordatorioFecha.localeCompare(b.recordatorioFecha)).slice(0, 6);
+    return [...fromProjects, ...fromTasks].sort((a, b) => (a.recordatorioFecha + (a.recordatorioHora || "00:00")).localeCompare(b.recordatorioFecha + (b.recordatorioHora || "00:00"))).slice(0, 6);
   }, [projects, tasks, clientMap]);
+
+  const upcomingBirthdays = useMemo(() => {
+    const list = [];
+    clients.forEach((c) => (c.colaboradores || []).forEach((col) => {
+      if (!col.cumpleanos) return;
+      const info = proximoCumple(col.cumpleanos);
+      if (info && info.dias <= 30) list.push({ id: col.id, nombre: col.nombre, cliente: c.nombre, ...info });
+    }));
+    return list.sort((a, b) => a.dias - b.dias);
+  }, [clients]);
 
   const filteredClients = clients
     .filter((c) => c.nombre.toLowerCase().includes(search.toLowerCase()) || (c.empresa || "").toLowerCase().includes(search.toLowerCase()))
@@ -464,9 +508,23 @@ function App({ userId, onLogout }) {
               <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
                 {upcomingReminders.map((p) => (
                   <div key={p.id} style={{ minWidth: 150, background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)", borderRadius: 12, padding: 10, flexShrink: 0 }}>
-                    <div style={{ fontSize: 11, color: "#fbbf24", fontWeight: 700 }}>{new Date(p.recordatorioFecha + "T00:00:00").toLocaleDateString("es-HN", { day: "numeric", month: "short" })}</div>
+                    <div style={{ fontSize: 11, color: "#fbbf24", fontWeight: 700 }}>{formatReminder(p.recordatorioFecha, p.recordatorioHora)}</div>
                     <div style={{ fontSize: 12.5, marginTop: 3, color: "#ede9fe" }}>{p.recordatorioNota || p.nombre}</div>
                     {p._label && <div style={{ fontSize: 10.5, marginTop: 2, color: "#9d8fc7" }}>{p._label}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {upcomingBirthdays.length > 0 && (
+            <div style={{ marginBottom: 22 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#d946ef", letterSpacing: 0.5, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>🎂 PRÓXIMOS CUMPLEAÑOS</div>
+              <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
+                {upcomingBirthdays.map((b) => (
+                  <div key={b.id} style={{ minWidth: 150, background: "rgba(217,70,239,0.08)", border: "1px solid rgba(217,70,239,0.25)", borderRadius: 12, padding: 10, flexShrink: 0 }}>
+                    <div style={{ fontSize: 11, color: "#e879f9", fontWeight: 700 }}>{b.fechaTxt}{b.dias === 0 ? " · ¡hoy!" : ""}</div>
+                    <div style={{ fontSize: 12.5, marginTop: 3, color: "#ede9fe" }}>{b.nombre}</div>
+                    <div style={{ fontSize: 10.5, marginTop: 2, color: "#9d8fc7" }}>{b.cliente}</div>
                   </div>
                 ))}
               </div>
@@ -476,8 +534,14 @@ function App({ userId, onLogout }) {
           {monthProjects.length === 0 && monthTasks.length === 0 ? (
             <div style={{ textAlign: "center", padding: "40px 20px", color: "#6b5f92", fontSize: 13.5 }}><IAlert size={22} style={{ opacity: 0.4, marginBottom: 8 }} /><div>Nada con fecha este mes.</div></div>
           ) : (<>
-            {monthProjects.map((p) => (<ProjectCard key={p.id} project={p} clientName={clientMap[p.clientId]?.nombre} onEdit={() => { setEditProject(p); setProjectForClient(p.clientId); setShowProjectForm(true); }} onDelete={() => deleteProject(p.id)} />))}
-            {monthTasks.map((t) => (<TaskCard key={t.id} task={t} onEdit={() => { setEditTask(t); setShowTaskForm(true); }} onDelete={() => deleteTask(t.id)} />))}
+            {monthProjects.length > 0 && (<>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#7c6ba8", letterSpacing: 0.5, marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}><IBriefcase size={11} /> CLIENTES</div>
+              {monthProjects.map((p) => (<ProjectCard key={p.id} project={p} clientName={clientMap[p.clientId]?.nombre} onEdit={() => { setEditProject(p); setProjectForClient(p.clientId); setShowProjectForm(true); }} onDelete={() => deleteProject(p.id)} />))}
+            </>)}
+            {monthTasks.length > 0 && (<>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#7c6ba8", letterSpacing: 0.5, margin: monthProjects.length > 0 ? "18px 0 8px" : "0 0 8px", display: "flex", alignItems: "center", gap: 5 }}><IGrad size={11} /> ESTUDIO</div>
+              {monthTasks.map((t) => (<TaskCard key={t.id} task={t} onEdit={() => { setEditTask(t); setShowTaskForm(true); }} onDelete={() => deleteTask(t.id)} />))}
+            </>)}
           </>)}
           {ongoingTasks.length > 0 && (<>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#9d8fc7", letterSpacing: 0.5, margin: "22px 0 10px" }}>EN CURSO / SIN FECHA</div>
@@ -546,7 +610,7 @@ function App({ userId, onLogout }) {
             <div style={{ marginBottom: 18 }}>
               {selectedClient.colaboradores.map((col) => (
                 <div key={col.id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(196,181,253,0.1)", borderRadius: 12, padding: "10px 12px", marginBottom: 7, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div><div style={{ fontSize: 13.5, fontWeight: 600 }}>{col.nombre}</div><div style={{ fontSize: 11.5, color: "#9d8fc7" }}>{[col.rol, col.contacto].filter(Boolean).join(" · ")}</div></div>
+                  <div><div style={{ fontSize: 13.5, fontWeight: 600 }}>{col.nombre}</div><div style={{ fontSize: 11.5, color: "#9d8fc7" }}>{[col.rol, col.contacto].filter(Boolean).join(" · ")}</div>{col.cumpleanos && <div style={{ fontSize: 11, color: "#fbbf24", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>🎂 {new Date(col.cumpleanos + "T00:00:00").toLocaleDateString("es-HN", { day: "numeric", month: "short" })}</div>}</div>
                   <button onClick={() => { const updated = { ...selectedClient, colaboradores: selectedClient.colaboradores.filter((x) => x.id !== col.id) }; const nc = clients.map((c) => c.id === selectedClient.id ? updated : c); setClients(nc); setSelectedClient(updated); persist({ clients: nc, projects, tasks }); }} style={{ background: "none", border: "none", color: "#6b5f92", cursor: "pointer" }}><IX size={14} /></button>
                 </div>
               ))}
