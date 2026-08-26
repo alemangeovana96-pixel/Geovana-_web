@@ -1,679 +1,338 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
-<title>Estudio — Panel privado</title>
-<meta name="robots" content="noindex, nofollow" />
-<link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#1c1330" />
-<link rel="apple-touch-icon" href="icon-192.png" />
-<link rel="icon" href="icon-192.png" />
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #0c0716; }
-  body { font-family: 'Manrope', sans-serif; }
-  input::placeholder, textarea::placeholder { color: #6b5f92; }
-  input, textarea, button { font-family: inherit; }
-  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(0.6); }
-  #root { min-height: 100vh; }
-</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geovana Alemán — Diseño Gráfico &amp; Branding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png">
 </head>
-<body>
-<div id="root"></div>
+<body class="loading">
 
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
-<script type="text/babel" data-presets="react">
-const { useState, useEffect, useCallback, useMemo, useRef } = React;
-
-/* ============================================================
-   CONFIGURA ESTO ANTES DE SUBIR — ver instrucciones que te di
-   ============================================================ */
-const SUPABASE_URL = "https://hamwyftrnljcmcqoivag.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_7W3TJ_X2RWCqiBfOC5sbYw_Ve8hbahD";
-/* ============================================================ */
-
-const sb = (SUPABASE_URL.startsWith("http"))
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null;
-
-const uid = () => Math.random().toString(36).slice(2, 10);
-const CACHE_KEY = "gl_estudio_cache_v1";
-const EMPTY_DATA = { clients: [], projects: [], tasks: [] };
-
-/* ---------- iconos simples (SVG propios, sin dependencias) ---------- */
-const Icon = ({ children, size = 18, ...p }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>{children}</svg>
-);
-const IPlus = (p) => <Icon {...p}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></Icon>;
-const IX = (p) => <Icon {...p}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Icon>;
-const ICalendar = (p) => <Icon {...p}><rect x="3" y="5" width="18" height="16" rx="2" /><line x1="3" y1="10" x2="21" y2="10" /><line x1="8" y1="3" x2="8" y2="7" /><line x1="16" y1="3" x2="16" y2="7" /></Icon>;
-const IUsers = (p) => <Icon {...p}><circle cx="9" cy="8" r="3.2" /><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" /><circle cx="18" cy="9" r="2.4" /><path d="M15 14.3c2.6.3 4.5 2.1 4.5 4.7" /></Icon>;
-const IBriefcase = (p) => <Icon {...p}><rect x="3" y="7.5" width="18" height="12" rx="2" /><path d="M8 7.5V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1.5" /><line x1="3" y1="12.5" x2="21" y2="12.5" /></Icon>;
-const IChevronL = (p) => <Icon {...p}><polyline points="15 18 9 12 15 6" /></Icon>;
-const IChevronR = (p) => <Icon {...p}><polyline points="9 18 15 12 9 6" /></Icon>;
-const IBell = (p) => <Icon {...p}><path d="M6 9a6 6 0 0 1 12 0c0 4.5 1.5 6 1.5 6h-15S6 13.5 6 9Z" /><path d="M10 19a2 2 0 0 0 4 0" /></Icon>;
-const ITrash = (p) => <Icon {...p}><polyline points="4 7 20 7" /><path d="M6 7v13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7" /><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></Icon>;
-const IEdit = (p) => <Icon {...p}><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></Icon>;
-const ISearch = (p) => <Icon {...p}><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" /></Icon>;
-const IAlert = (p) => <Icon {...p}><path d="M12 3 2 20h20Z" /><line x1="12" y1="9" x2="12" y2="14" /><circle cx="12" cy="17" r="0.6" fill="currentColor" /></Icon>;
-const IGrad = (p) => <Icon {...p}><path d="M2 9 12 4l10 5-10 5-10-5Z" /><path d="M6 11.5V17c0 1.5 2.7 3 6 3s6-1.5 6-3v-5.5" /></Icon>;
-const IClock = (p) => <Icon {...p}><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2" /><path d="M9 2h6" /></Icon>;
-const ILock = (p) => <Icon {...p}><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /></Icon>;
-const ISettings = (p) => <Icon {...p}><circle cx="12" cy="12" r="3" /><path d="M19.4 13.5a7.7 7.7 0 0 0 0-3l1.9-1.5-2-3.5-2.2.9a7.7 7.7 0 0 0-2.6-1.5L14 2h-4l-.5 2.4a7.7 7.7 0 0 0-2.6 1.5l-2.2-.9-2 3.5L4.6 10a7.7 7.7 0 0 0 0 3l-1.9 1.5 2 3.5 2.2-.9c.8.7 1.7 1.2 2.6 1.5L10 22h4l.5-2.4c.9-.3 1.8-.8 2.6-1.5l2.2.9 2-3.5Z" /></Icon>;
-const IDownload = (p) => <Icon {...p}><path d="M12 3v12" /><polyline points="7 10 12 15 17 10" /><path d="M5 19h14" /></Icon>;
-const IUpload = (p) => <Icon {...p}><path d="M12 21V9" /><polyline points="7 14 12 9 17 14" /><path d="M5 5h14" /></Icon>;
-const ICloud = (p) => <Icon {...p}><path d="M7 18a4.5 4.5 0 0 1-.5-8.97A5.5 5.5 0 0 1 17.3 8.02 4 4 0 0 1 17 18Z" /></Icon>;
-
-/* ---------- constantes ---------- */
-const STATUS = {
-  urgente: { label: "Urgente", color: "#fb7185", bg: "rgba(251,113,133,0.14)", ring: "rgba(251,113,133,0.4)" },
-  proceso: { label: "En proceso", color: "#a78bfa", bg: "rgba(167,139,250,0.14)", ring: "rgba(167,139,250,0.4)" },
-  pausa: { label: "En pausa", color: "#fbbf24", bg: "rgba(251,191,36,0.14)", ring: "rgba(251,191,36,0.4)" },
-  completado: { label: "Completado", color: "#34d399", bg: "rgba(52,211,153,0.14)", ring: "rgba(52,211,153,0.4)" },
-};
-const TIPO_TAREA = { curso: "Curso / certificado", personal: "Personal", administrativo: "Administrativo", otro: "Otro" };
-const CATEGORIA_CLIENTE = {
-  activo: { label: "Activo", color: "#34d399", bg: "rgba(52,211,153,0.14)" },
-  anterior: { label: "Anterior", color: "#9d8fc7", bg: "rgba(157,143,199,0.14)" },
-  prospecto: { label: "Prospecto", color: "#fbbf24", bg: "rgba(251,191,36,0.14)" },
-};
-const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-
-const inputStyle = {
-  width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)",
-  border: "1px solid rgba(196,181,253,0.18)", borderRadius: 12, padding: "11px 13px",
-  color: "#ede9fe", fontSize: 14.5, fontFamily: "'Manrope', sans-serif", outline: "none",
-};
-
-function formatReminder(fecha, hora) {
-  const fechaTxt = new Date(fecha + "T00:00:00").toLocaleDateString("es-HN", { day: "numeric", month: "short" });
-  if (!hora) return fechaTxt;
-  const [h, m] = hora.split(":");
-  const d = new Date(); d.setHours(+h, +m);
-  const horaTxt = d.toLocaleTimeString("es-HN", { hour: "numeric", minute: "2-digit" });
-  return `${fechaTxt} · ${horaTxt}`;
-}
-
-function proximoCumple(cumpleanos) {
-  if (!cumpleanos) return null;
-  const [, mes, dia] = cumpleanos.split("-").map(Number);
-  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-  let next = new Date(hoy.getFullYear(), mes - 1, dia);
-  if (next < hoy) next = new Date(hoy.getFullYear() + 1, mes - 1, dia);
-  const dias = Math.round((next - hoy) / 86400000);
-  const fechaTxt = next.toLocaleDateString("es-HN", { day: "numeric", month: "short" });
-  return { dias, fechaTxt };
-}
-
-/* ---------- pantalla de configuración faltante ---------- */
-function SetupNeeded() {
-  return (
-    <div style={{ minHeight: "100vh", background: "#0c0716", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, color: "#ede9fe", textAlign: "center" }}>
-      <div style={{ maxWidth: 380 }}>
-        <h2 style={{ fontFamily: "'Fraunces', serif" }}>Falta configurar la base de datos</h2>
-        <p style={{ color: "#9d8fc7", fontSize: 14, lineHeight: 1.6 }}>Abre <code>index.html</code> y reemplaza SUPABASE_URL y SUPABASE_ANON_KEY con los datos de tu proyecto de Supabase, luego vuelve a subir el archivo.</p>
-      </div>
+<div id="loader">
+  <div class="logo-wrap">
+    <img src="assets/logo-mark.png" alt="Geovana Alemán">
+    <div class="shine"></div>
+    <div class="loader-word">
+      <div class="lname">Geovana Alemán</div>
+      <div class="lrole">DISEÑO &amp; BRANDING</div>
     </div>
-  );
-}
+  </div>
+</div>
 
-/* ---------- inicio de sesión (Supabase Auth real) ---------- */
-function AuthGate({ onAuth }) {
-  const [mode, setMode] = useState("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const submit = async () => {
-    setError(""); setInfo(""); setBusy(true);
-    if (mode === "signin") {
-      const { error } = await sb.auth.signInWithPassword({ email, password });
-      setBusy(false);
-      if (error) return setError(error.message === "Invalid login credentials" ? "Correo o contraseña incorrectos." : error.message);
-      onAuth();
-    } else {
-      const { data, error } = await sb.auth.signUp({ email, password });
-      setBusy(false);
-      if (error) return setError(error.message);
-      if (data.session) { onAuth(); return; }
-      setInfo("Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.");
-      setMode("signin");
-    }
-  };
-
-  return (
-    <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse at top, #24173f 0%, #120b1f 55%, #0c0716 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ width: "100%", maxWidth: 360 }}>
-        <div style={{ width: 52, height: 52, borderRadius: 16, background: "linear-gradient(135deg,#8b5cf6,#d946ef)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px", color: "#fff" }}><ILock size={24} /></div>
-        <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 22, color: "#f5f1ff", textAlign: "center", margin: "0 0 4px", fontWeight: 600 }}>{mode === "signin" ? "Panel privado" : "Crear tu cuenta"}</h1>
-        <p style={{ textAlign: "center", color: "#9d8fc7", fontSize: 13, margin: "0 0 22px" }}>{mode === "signin" ? "Inicia sesión para ver tu información, sincronizada en todos tus dispositivos." : "Solo hazlo una vez. Después desactiva los registros nuevos en Supabase."}</p>
-        <input type="email" style={{ ...inputStyle, marginBottom: 10 }} placeholder="Correo" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
-        <input type="password" style={{ ...inputStyle, marginBottom: 10 }} placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} />
-        {error && <div style={{ color: "#fb7185", fontSize: 12.5, textAlign: "center", marginBottom: 10 }}>{error}</div>}
-        {info && <div style={{ color: "#34d399", fontSize: 12.5, textAlign: "center", marginBottom: 10 }}>{info}</div>}
-        <button disabled={busy || !email || !password} onClick={submit} style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", background: "linear-gradient(135deg,#8b5cf6,#d946ef)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer", opacity: busy ? 0.6 : 1 }}>{mode === "signin" ? "Entrar" : "Crear cuenta"}</button>
-        <button onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); setInfo(""); }} style={{ display: "block", margin: "16px auto 0", background: "none", border: "none", color: "#a78bfa", fontSize: 12.5, cursor: "pointer" }}>{mode === "signin" ? "¿Primera vez? Crea tu cuenta" : "Ya tengo cuenta, iniciar sesión"}</button>
+<header>
+  <div class="nav">
+    <a href="index.html" class="brand">
+      <img src="assets/logo-mark.png" alt="Isotipo Geovana Alemán">
+      <span class="brand-name">Geovana Alemán<span>Diseño &amp; Branding</span></span>
+    </a>
+    <nav class="links">
+      <a href="index.html">Inicio</a>
+      <a href="sobre-mi.html">Sobre mí</a>
+      <a href="portafolio.html">Portafolio</a>
+      <a href="servicios.html">Servicios</a>
+      <a href="blog.html">Blog</a>
+      <a href="contacto.html">Contacto</a>
+    </nav>
+    <div class="nav-cta">
+      <div class="lang-switch">
+        <a href="index.html" class="active">ES</a>
+        <a href="en-index.html">EN</a>
       </div>
+      <a href="contacto.html" class="btn primary small">Escríbeme</a>
+      <button class="burger" aria-label="Abrir menú"><span></span><span></span><span></span></button>
     </div>
-  );
-}
+  </div>
+</header>
 
-/* ---------- piezas reutilizables ---------- */
-function Modal({ title, onClose, children }) {
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(10,6,20,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 50 }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, maxHeight: "88vh", overflowY: "auto", background: "linear-gradient(180deg, #1c1330 0%, #150e24 100%)", border: "1px solid rgba(196,181,253,0.15)", borderTop: "1px solid rgba(196,181,253,0.25)", borderRadius: "24px 24px 0 0", padding: "20px 20px 28px", boxShadow: "0 -8px 40px rgba(0,0,0,0.5)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 20, color: "#ede9fe", margin: 0, fontWeight: 600 }}>{title}</h3>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 999, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", color: "#c4b5fd", cursor: "pointer" }}><IX size={16} /></button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
-function Field({ label, children }) {
-  return <div style={{ marginBottom: 14 }}><label style={{ display: "block", fontSize: 12, color: "#a78bfa", marginBottom: 6, letterSpacing: 0.3 }}>{label}</label>{children}</div>;
-}
-function StatusPicker({ value, onChange }) {
-  return (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      {Object.entries(STATUS).map(([key, s]) => (
-        <button key={key} onClick={() => onChange(key)} style={{ padding: "8px 13px", borderRadius: 999, fontSize: 13, fontWeight: 600, border: value === key ? `1.5px solid ${s.color}` : "1.5px solid rgba(255,255,255,0.1)", background: value === key ? s.bg : "rgba(255,255,255,0.03)", color: value === key ? s.color : "#9d8fc7", cursor: "pointer" }}>{s.label}</button>
-      ))}
-    </div>
-  );
-}
+<main>
 
-/* ---------- formularios ---------- */
-function ClientForm({ initial, onSave, onClose }) {
-  const [nombre, setNombre] = useState(initial?.nombre || "");
-  const [empresa, setEmpresa] = useState(initial?.empresa || "");
-  const [email, setEmail] = useState(initial?.email || "");
-  const [telefono, setTelefono] = useState(initial?.telefono || "");
-  const [categoria, setCategoria] = useState(initial?.categoria || "activo");
-  return (
-    <Modal title={initial ? "Editar cliente" : "Nuevo cliente"} onClose={onClose}>
-      <Field label="Nombre"><input style={inputStyle} value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre del cliente" /></Field>
-      <Field label="Empresa / marca"><input style={inputStyle} value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Opcional" /></Field>
-      <Field label="Correo"><input style={inputStyle} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.com" /></Field>
-      <Field label="Teléfono"><input style={inputStyle} value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="+504" /></Field>
-      <Field label="Categoría">
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {Object.entries(CATEGORIA_CLIENTE).map(([key, c]) => (
-            <button key={key} onClick={() => setCategoria(key)} style={{ padding: "8px 13px", borderRadius: 999, fontSize: 13, fontWeight: 600, border: categoria === key ? `1.5px solid ${c.color}` : "1.5px solid rgba(255,255,255,0.1)", background: categoria === key ? c.bg : "rgba(255,255,255,0.03)", color: categoria === key ? c.color : "#9d8fc7", cursor: "pointer" }}>{c.label}</button>
-          ))}
-        </div>
-      </Field>
-      <button disabled={!nombre.trim()} onClick={() => { onSave({ id: initial?.id || uid(), nombre: nombre.trim(), empresa: empresa.trim(), email: email.trim(), telefono: telefono.trim(), categoria, colaboradores: initial?.colaboradores || [] }); onClose(); }} style={{ width: "100%", marginTop: 6, padding: "13px", borderRadius: 12, border: "none", background: nombre.trim() ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: nombre.trim() ? "pointer" : "not-allowed" }}>Guardar cliente</button>
-    </Modal>
-  );
-}
-function CollaboratorForm({ onSave, onClose }) {
-  const [nombre, setNombre] = useState("");
-  const [rol, setRol] = useState("");
-  const [contacto, setContacto] = useState("");
-  const [cumpleanos, setCumpleanos] = useState("");
-  return (
-    <Modal title="Nuevo colaborador" onClose={onClose}>
-      <Field label="Nombre"><input style={inputStyle} value={nombre} onChange={(e) => setNombre(e.target.value)} /></Field>
-      <Field label="Rol / puesto"><input style={inputStyle} value={rol} onChange={(e) => setRol(e.target.value)} placeholder="Ej. Encargado de marketing" /></Field>
-      <Field label="Correo o teléfono"><input style={inputStyle} value={contacto} onChange={(e) => setContacto(e.target.value)} /></Field>
-      <Field label="Cumpleaños (opcional)"><input type="date" style={inputStyle} value={cumpleanos} onChange={(e) => setCumpleanos(e.target.value)} /></Field>
-      <button disabled={!nombre.trim()} onClick={() => { onSave({ id: uid(), nombre: nombre.trim(), rol: rol.trim(), contacto: contacto.trim(), cumpleanos }); onClose(); }} style={{ width: "100%", marginTop: 6, padding: "13px", borderRadius: 12, border: "none", background: nombre.trim() ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: nombre.trim() ? "pointer" : "not-allowed" }}>Agregar colaborador</button>
-    </Modal>
-  );
-}
-function ProjectForm({ clientId, initial, onSave, onClose }) {
-  const [nombre, setNombre] = useState(initial?.nombre || "");
-  const [descripcion, setDescripcion] = useState(initial?.descripcion || "");
-  const [status, setStatus] = useState(initial?.status || "proceso");
-  const [fechaEntrega, setFechaEntrega] = useState(initial?.fechaEntrega || "");
-  const [recordatorioFecha, setRecordatorioFecha] = useState(initial?.recordatorioFecha || "");
-  const [recordatorioHora, setRecordatorioHora] = useState(initial?.recordatorioHora || "");
-  const [recordatorioNota, setRecordatorioNota] = useState(initial?.recordatorioNota || "");
-  return (
-    <Modal title={initial ? "Editar proyecto" : "Nuevo proyecto"} onClose={onClose}>
-      <Field label="Nombre del proyecto"><input style={inputStyle} value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Identidad visual - Café Aroma" /></Field>
-      <Field label="Descripción"><textarea style={{ ...inputStyle, minHeight: 70, resize: "vertical" }} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} /></Field>
-      <Field label="Estado"><StatusPicker value={status} onChange={setStatus} /></Field>
-      <Field label="Fecha de entrega"><input type="date" style={inputStyle} value={fechaEntrega} onChange={(e) => setFechaEntrega(e.target.value)} /></Field>
-      <Field label="Recordatorio / reunión">
-        <div style={{ display: "flex", gap: 8 }}>
-          <input type="date" style={inputStyle} value={recordatorioFecha} onChange={(e) => setRecordatorioFecha(e.target.value)} />
-          <input type="time" style={{ ...inputStyle, maxWidth: 120 }} value={recordatorioHora} onChange={(e) => setRecordatorioHora(e.target.value)} />
-        </div>
-      </Field>
-      <Field label="Nota del recordatorio"><input style={inputStyle} value={recordatorioNota} onChange={(e) => setRecordatorioNota(e.target.value)} placeholder="Ej. Reunión de avance con el cliente" /></Field>
-      <button disabled={!nombre.trim() || !fechaEntrega} onClick={() => { onSave({ id: initial?.id || uid(), clientId, nombre: nombre.trim(), descripcion: descripcion.trim(), status, fechaEntrega, recordatorioFecha, recordatorioHora, recordatorioNota: recordatorioNota.trim() }); onClose(); }} style={{ width: "100%", marginTop: 6, padding: "13px", borderRadius: 12, border: "none", background: (nombre.trim() && fechaEntrega) ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: (nombre.trim() && fechaEntrega) ? "pointer" : "not-allowed" }}>Guardar proyecto</button>
-    </Modal>
-  );
-}
-function TaskForm({ initial, onSave, onClose }) {
-  const [nombre, setNombre] = useState(initial?.nombre || "");
-  const [descripcion, setDescripcion] = useState(initial?.descripcion || "");
-  const [tipo, setTipo] = useState(initial?.tipo || "personal");
-  const [status, setStatus] = useState(initial?.status || "proceso");
-  const [fecha, setFecha] = useState(initial?.fecha || "");
-  const [recordatorioFecha, setRecordatorioFecha] = useState(initial?.recordatorioFecha || "");
-  const [recordatorioHora, setRecordatorioHora] = useState(initial?.recordatorioHora || "");
-  const [recordatorioNota, setRecordatorioNota] = useState(initial?.recordatorioNota || "");
-  return (
-    <Modal title={initial ? "Editar actividad" : "Nueva actividad"} onClose={onClose}>
-      <Field label="Nombre"><input style={inputStyle} value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Certificado de branding, clases de inglés…" /></Field>
-      <Field label="Descripción"><textarea style={{ ...inputStyle, minHeight: 60, resize: "vertical" }} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} /></Field>
-      <Field label="Tipo">
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {Object.entries(TIPO_TAREA).map(([key, label]) => (
-            <button key={key} onClick={() => setTipo(key)} style={{ padding: "8px 13px", borderRadius: 999, fontSize: 13, fontWeight: 600, border: tipo === key ? "1.5px solid #a78bfa" : "1.5px solid rgba(255,255,255,0.1)", background: tipo === key ? "rgba(167,139,250,0.14)" : "rgba(255,255,255,0.03)", color: tipo === key ? "#c4b5fd" : "#9d8fc7", cursor: "pointer" }}>{label}</button>
-          ))}
-        </div>
-      </Field>
-      <Field label="Estado"><StatusPicker value={status} onChange={setStatus} /></Field>
-      <Field label="Fecha (opcional)"><input type="date" style={inputStyle} value={fecha} onChange={(e) => setFecha(e.target.value)} /></Field>
-      <Field label="Recordatorio / reunión">
-        <div style={{ display: "flex", gap: 8 }}>
-          <input type="date" style={inputStyle} value={recordatorioFecha} onChange={(e) => setRecordatorioFecha(e.target.value)} />
-          <input type="time" style={{ ...inputStyle, maxWidth: 120 }} value={recordatorioHora} onChange={(e) => setRecordatorioHora(e.target.value)} />
-        </div>
-      </Field>
-      <Field label="Nota del recordatorio"><input style={inputStyle} value={recordatorioNota} onChange={(e) => setRecordatorioNota(e.target.value)} placeholder="Ej. Retomar clases de inglés" /></Field>
-      <button disabled={!nombre.trim()} onClick={() => { onSave({ id: initial?.id || uid(), nombre: nombre.trim(), descripcion: descripcion.trim(), tipo, status, fecha, recordatorioFecha, recordatorioHora, recordatorioNota: recordatorioNota.trim() }); onClose(); }} style={{ width: "100%", marginTop: 6, padding: "13px", borderRadius: 12, border: "none", background: nombre.trim() ? "linear-gradient(135deg,#8b5cf6,#d946ef)" : "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: nombre.trim() ? "pointer" : "not-allowed" }}>Guardar actividad</button>
-    </Modal>
-  );
-}
-
-/* ---------- tarjetas ---------- */
-function ProjectCard({ project, clientName, onEdit, onDelete }) {
-  const s = STATUS[project.status];
-  const dias = Math.ceil((new Date(project.fechaEntrega) - new Date(new Date().toDateString())) / 86400000);
-  return (
-    <div style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${s.ring}`, borderRadius: 16, padding: 14, marginBottom: 10 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-        <div><div style={{ fontSize: 15, fontWeight: 700, color: "#ede9fe" }}>{project.nombre}</div>{clientName && <div style={{ fontSize: 12.5, color: "#9d8fc7", marginTop: 2 }}>{clientName}</div>}</div>
-        <span style={{ fontSize: 11.5, fontWeight: 700, color: s.color, background: s.bg, padding: "4px 10px", borderRadius: 999, whiteSpace: "nowrap" }}>{s.label}</span>
-      </div>
-      {project.descripcion && <div style={{ fontSize: 13, color: "#c4b5fd", marginTop: 8, lineHeight: 1.4 }}>{project.descripcion}</div>}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
-        <div style={{ fontSize: 12.5, color: dias < 0 ? "#fb7185" : dias <= 3 ? "#fbbf24" : "#9d8fc7", display: "flex", alignItems: "center", gap: 5, fontWeight: 600 }}>
-          <ICalendar size={13} />{new Date(project.fechaEntrega + "T00:00:00").toLocaleDateString("es-HN", { day: "numeric", month: "short" })}{dias < 0 ? " · vencido" : dias === 0 ? " · hoy" : ` · ${dias}d`}
-        </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          <button onClick={onEdit} style={{ background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 8, padding: 6, color: "#c4b5fd", cursor: "pointer" }}><IEdit size={13} /></button>
-          <button onClick={onDelete} style={{ background: "rgba(251,113,133,0.1)", border: "none", borderRadius: 8, padding: 6, color: "#fb7185", cursor: "pointer" }}><ITrash size={13} /></button>
-        </div>
-      </div>
-      {project.recordatorioFecha && <div style={{ marginTop: 8, fontSize: 12, color: "#fbbf24", display: "flex", alignItems: "center", gap: 5 }}><IBell size={12} /> {formatReminder(project.recordatorioFecha, project.recordatorioHora)} — {project.recordatorioNota || "Recordatorio"}</div>}
-    </div>
-  );
-}
-function TaskCard({ task, onEdit, onDelete }) {
-  const s = STATUS[task.status];
-  const dias = task.fecha ? Math.ceil((new Date(task.fecha) - new Date(new Date().toDateString())) / 86400000) : null;
-  return (
-    <div style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${s.ring}`, borderRadius: 16, padding: 14, marginBottom: 10 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-        <div><div style={{ fontSize: 15, fontWeight: 700, color: "#ede9fe" }}>{task.nombre}</div><div style={{ fontSize: 12, color: "#9d8fc7", marginTop: 2 }}>{TIPO_TAREA[task.tipo]}</div></div>
-        <span style={{ fontSize: 11.5, fontWeight: 700, color: s.color, background: s.bg, padding: "4px 10px", borderRadius: 999, whiteSpace: "nowrap" }}>{s.label}</span>
-      </div>
-      {task.descripcion && <div style={{ fontSize: 13, color: "#c4b5fd", marginTop: 8, lineHeight: 1.4 }}>{task.descripcion}</div>}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
-        <div style={{ fontSize: 12.5, color: dias !== null && dias < 0 ? "#fb7185" : dias !== null && dias <= 3 ? "#fbbf24" : "#9d8fc7", display: "flex", alignItems: "center", gap: 5, fontWeight: 600 }}>
-          {task.fecha ? (<><ICalendar size={13} />{new Date(task.fecha + "T00:00:00").toLocaleDateString("es-HN", { day: "numeric", month: "short" })}{dias < 0 ? " · vencido" : dias === 0 ? " · hoy" : ` · ${dias}d`}</>) : (<><IClock size={13} /> Sin fecha fija</>)}
-        </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          <button onClick={onEdit} style={{ background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 8, padding: 6, color: "#c4b5fd", cursor: "pointer" }}><IEdit size={13} /></button>
-          <button onClick={onDelete} style={{ background: "rgba(251,113,133,0.1)", border: "none", borderRadius: 8, padding: 6, color: "#fb7185", cursor: "pointer" }}><ITrash size={13} /></button>
-        </div>
-      </div>
-      {task.recordatorioFecha && <div style={{ marginTop: 8, fontSize: 12, color: "#fbbf24", display: "flex", alignItems: "center", gap: 5 }}><IBell size={12} /> {formatReminder(task.recordatorioFecha, task.recordatorioHora)} — {task.recordatorioNota || "Recordatorio"}</div>}
-    </div>
-  );
-}
-
-/* ---------- ajustes / respaldo ---------- */
-function SettingsSheet({ data, onImport, onClose, onLogout, syncState }) {
-  const fileRef = useRef(null);
-  const [msg, setMsg] = useState("");
-
-  const exportBackup = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `respaldo-estudio-${new Date().toISOString().slice(0, 10)}.json`; a.click();
-    URL.revokeObjectURL(url);
-  };
-  const handleFile = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(reader.result);
-        if (!parsed.clients || !parsed.projects) throw new Error();
-        onImport({ clients: parsed.clients || [], projects: parsed.projects || [], tasks: parsed.tasks || [] });
-        setMsg("Respaldo importado y sincronizado.");
-      } catch { setMsg("Ese archivo no es un respaldo válido."); }
-    };
-    reader.readAsText(file);
-  };
-
-  return (
-    <Modal title="Ajustes y respaldo" onClose={onClose}>
-      <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, color: syncState === "error" ? "#fb7185" : "#34d399", marginBottom: 16 }}>
-        <ICloud size={14} /> {syncState === "error" ? "Sin conexión — no se pudo sincronizar" : "Sincronizado con la nube"}
-      </div>
-      <p style={{ fontSize: 13, color: "#9d8fc7", lineHeight: 1.5, marginTop: 0 }}>Tus datos ya se sincronizan solos entre tu celular y tu computadora al iniciar sesión con la misma cuenta. Estos botones son solo para respaldos manuales.</p>
-      <button onClick={exportBackup} style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(196,181,253,0.25)", background: "rgba(255,255,255,0.04)", color: "#ede9fe", fontWeight: 700, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 10 }}><IDownload size={16} /> Exportar respaldo (.json)</button>
-      <button onClick={() => fileRef.current.click()} style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(196,181,253,0.25)", background: "rgba(255,255,255,0.04)", color: "#ede9fe", fontWeight: 700, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 6 }}><IUpload size={16} /> Importar respaldo</button>
-      <input ref={fileRef} type="file" accept="application/json" onChange={handleFile} style={{ display: "none" }} />
-      {msg && <div style={{ fontSize: 12.5, color: "#a78bfa", marginTop: 8 }}>{msg}</div>}
-      <div style={{ height: 1, background: "rgba(196,181,253,0.12)", margin: "18px 0" }} />
-      <button onClick={onLogout} style={{ width: "100%", padding: "12px", borderRadius: 12, border: "none", background: "rgba(251,113,133,0.1)", color: "#fb7185", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Cerrar sesión</button>
-    </Modal>
-  );
-}
-
-/* ---------- datos en la nube ---------- */
-function useCloudData(userId) {
-  const [state, setState] = useState(EMPTY_DATA);
-  const [loaded, setLoaded] = useState(false);
-  const [syncState, setSyncState] = useState("ok");
-
-  const fetchRemote = useCallback(async () => {
-    const { data, error } = await sb.from("estudio_data").select("data").eq("user_id", userId).maybeSingle();
-    if (error) { setSyncState("error"); return; }
-    if (data?.data) {
-      setState(data.data);
-      localStorage.setItem(CACHE_KEY, JSON.stringify(data.data));
-      setSyncState("ok");
-    } else {
-      await sb.from("estudio_data").insert({ user_id: userId, data: EMPTY_DATA });
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    (async () => {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) { try { setState(JSON.parse(cached)); } catch {} }
-      await fetchRemote();
-      setLoaded(true);
-    })();
-    const onVisible = () => { if (document.visibilityState === "visible") fetchRemote(); };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [fetchRemote]);
-
-  const persist = useCallback(async (next) => {
-    setState(next);
-    localStorage.setItem(CACHE_KEY, JSON.stringify(next));
-    const { error } = await sb.from("estudio_data").upsert({ user_id: userId, data: next, updated_at: new Date().toISOString() });
-    setSyncState(error ? "error" : "ok");
-  }, [userId]);
-
-  return { ...state, persist, loaded, syncState };
-}
-
-/* ---------- app principal ---------- */
-function App({ userId, onLogout }) {
-  const { clients: cClients, projects: cProjects, tasks: cTasks, persist, loaded, syncState } = useCloudData(userId);
-  const [clients, setClients] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [tasks, setTasks] = useState([]);
-
-  useEffect(() => { if (loaded) { setClients(cClients); setProjects(cProjects); setTasks(cTasks); } }, [loaded]);
-
-  const saveClients = (next) => { setClients(next); persist({ clients: next, projects, tasks }); };
-  const saveProjects = (next) => { setProjects(next); persist({ clients, projects: next, tasks }); };
-  const saveTasks = (next) => { setTasks(next); persist({ clients, projects, tasks: next }); };
-
-  const [tab, setTab] = useState("dashboard");
-  const [monthOffset, setMonthOffset] = useState(0);
-  const [selectedClient, setSelectedClient] = useState(null);
-  const [showClientForm, setShowClientForm] = useState(false);
-  const [editClient, setEditClient] = useState(null);
-  const [showCollabForm, setShowCollabForm] = useState(false);
-  const [showProjectForm, setShowProjectForm] = useState(false);
-  const [editProject, setEditProject] = useState(null);
-  const [projectForClient, setProjectForClient] = useState(null);
-  const [showTaskForm, setShowTaskForm] = useState(false);
-  const [editTask, setEditTask] = useState(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [search, setSearch] = useState("");
-  const [filtroCategoria, setFiltroCategoria] = useState("todos");
-
-  const today = new Date();
-  const viewDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
-  const monthLabel = `${MESES[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
-  const clientMap = useMemo(() => Object.fromEntries(clients.map((c) => [c.id, c])), [clients]);
-
-  const monthProjects = useMemo(() => projects.filter((p) => { const d = new Date(p.fechaEntrega + "T00:00:00"); return d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear(); }).sort((a, b) => a.fechaEntrega.localeCompare(b.fechaEntrega)), [projects, viewDate]);
-  const monthTasks = useMemo(() => tasks.filter((t) => { if (!t.fecha) return false; const d = new Date(t.fecha + "T00:00:00"); return d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear(); }).sort((a, b) => a.fecha.localeCompare(b.fecha)), [tasks, viewDate]);
-  const ongoingTasks = useMemo(() => tasks.filter((t) => !t.fecha && t.status !== "completado"), [tasks]);
-  const upcomingReminders = useMemo(() => {
-    const fromProjects = projects.filter((p) => p.recordatorioFecha).map((p) => ({ ...p, _label: clientMap[p.clientId]?.nombre }));
-    const fromTasks = tasks.filter((t) => t.recordatorioFecha);
-    return [...fromProjects, ...fromTasks].sort((a, b) => (a.recordatorioFecha + (a.recordatorioHora || "00:00")).localeCompare(b.recordatorioFecha + (b.recordatorioHora || "00:00"))).slice(0, 6);
-  }, [projects, tasks, clientMap]);
-
-  const upcomingBirthdays = useMemo(() => {
-    const list = [];
-    clients.forEach((c) => (c.colaboradores || []).forEach((col) => {
-      if (!col.cumpleanos) return;
-      const info = proximoCumple(col.cumpleanos);
-      if (info && info.dias <= 30) list.push({ id: col.id, nombre: col.nombre, cliente: c.nombre, ...info });
-    }));
-    return list.sort((a, b) => a.dias - b.dias);
-  }, [clients]);
-
-  const filteredClients = clients
-    .filter((c) => c.nombre.toLowerCase().includes(search.toLowerCase()) || (c.empresa || "").toLowerCase().includes(search.toLowerCase()))
-    .filter((c) => filtroCategoria === "todos" || (c.categoria || "activo") === filtroCategoria);
-  const deleteProject = (id) => saveProjects(projects.filter((p) => p.id !== id));
-  const deleteTask = (id) => saveTasks(tasks.filter((t) => t.id !== id));
-  const deleteClient = (id) => { const nc = clients.filter((c) => c.id !== id); const np = projects.filter((p) => p.clientId !== id); setClients(nc); setProjects(np); persist({ clients: nc, projects: np, tasks }); if (selectedClient?.id === id) setSelectedClient(null); };
-
-  if (!loaded) return <div style={{ minHeight: "100vh", background: "#150e24", display: "flex", alignItems: "center", justifyContent: "center", color: "#9d8fc7" }}>Sincronizando…</div>;
-
-  return (
-    <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse at top, #24173f 0%, #120b1f 55%, #0c0716 100%)", paddingBottom: 90, color: "#ede9fe" }}>
-      <div style={{ padding: "26px 18px 10px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+  <!-- ---------- HERO (oscuro, estilo referencia) ---------- -->
+  <section class="dark-hero">
+    <div class="ribbon-bg" aria-hidden="true"></div>
+    <div class="glow-orb o1" aria-hidden="true"></div>
+    <div class="glow-orb o2" aria-hidden="true"></div>
+    <div class="wrap">
+      <div class="dark-hero-grid" style="margin-top:20px;">
         <div>
-          <div style={{ fontSize: 11, letterSpacing: 2, color: "#a78bfa", fontWeight: 700, textTransform: "uppercase" }}>Estudio</div>
-          <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 26, margin: "2px 0 0", fontWeight: 600, color: "#f5f1ff" }}>{tab === "dashboard" ? "Panorama del mes" : tab === "tasks" ? "Estudio" : selectedClient ? selectedClient.nombre : "Clientes"}</h1>
+          <span class="script">Ideas</span>
+          <h1>que conectan.</h1>
+          <p class="lead">Soy Geovana Alemán, diseñadora gráfica. Creo identidades visuales y piezas digitales o impresas para marcas que buscan claridad y coherencia. De la idea a la ejecución: transformo tu visión en una identidad con propósito, donde cada detalle cuenta.</p>
+          <div class="hero-ctas">
+            <a href="contacto.html" class="btn primary">Hablemos de tu proyecto</a>
+            <a href="portafolio.html" class="btn" style="border-color:rgba(255,255,255,0.4); color:#fff;">Ver portafolio</a>
+          </div>
         </div>
-        <button onClick={() => setShowSettings(true)} style={{ background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 999, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", color: "#c4b5fd", cursor: "pointer", flexShrink: 0 }}><ISettings size={17} /></button>
+        <div class="dark-frame-wrap">
+          <img src="assets/photo-hero-graphic.png" alt="Geovana Alemán" style="width:100%; max-width:420px;">
+        </div>
       </div>
-
-      {syncState === "error" && <div style={{ margin: "0 18px 12px", padding: "10px 14px", background: "rgba(251,113,133,0.12)", border: "1px solid rgba(251,113,133,0.3)", borderRadius: 12, fontSize: 12.5, color: "#fb7185" }}>Sin conexión — los cambios se guardaron solo en este dispositivo por ahora.</div>}
-
-      {tab === "dashboard" && (
-        <div style={{ padding: "6px 18px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(196,181,253,0.15)", borderRadius: 16, padding: "10px 14px", marginBottom: 18 }}>
-            <button onClick={() => setMonthOffset((m) => m - 1)} style={{ background: "none", border: "none", color: "#c4b5fd", cursor: "pointer" }}><IChevronL size={20} /></button>
-            <span style={{ fontWeight: 700, fontSize: 15 }}>{monthLabel}</span>
-            <button onClick={() => setMonthOffset((m) => m + 1)} style={{ background: "none", border: "none", color: "#c4b5fd", cursor: "pointer" }}><IChevronR size={20} /></button>
-          </div>
-          {upcomingReminders.length > 0 && (
-            <div style={{ marginBottom: 22 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#fbbf24", letterSpacing: 0.5, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}><IBell size={13} /> PRÓXIMOS RECORDATORIOS</div>
-              <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
-                {upcomingReminders.map((p) => (
-                  <div key={p.id} style={{ minWidth: 150, background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)", borderRadius: 12, padding: 10, flexShrink: 0 }}>
-                    <div style={{ fontSize: 11, color: "#fbbf24", fontWeight: 700 }}>{formatReminder(p.recordatorioFecha, p.recordatorioHora)}</div>
-                    <div style={{ fontSize: 12.5, marginTop: 3, color: "#ede9fe" }}>{p.recordatorioNota || p.nombre}</div>
-                    {p._label && <div style={{ fontSize: 10.5, marginTop: 2, color: "#9d8fc7" }}>{p._label}</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {upcomingBirthdays.length > 0 && (
-            <div style={{ marginBottom: 22 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#d946ef", letterSpacing: 0.5, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>🎂 PRÓXIMOS CUMPLEAÑOS</div>
-              <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
-                {upcomingBirthdays.map((b) => (
-                  <div key={b.id} style={{ minWidth: 150, background: "rgba(217,70,239,0.08)", border: "1px solid rgba(217,70,239,0.25)", borderRadius: 12, padding: 10, flexShrink: 0 }}>
-                    <div style={{ fontSize: 11, color: "#e879f9", fontWeight: 700 }}>{b.fechaTxt}{b.dias === 0 ? " · ¡hoy!" : ""}</div>
-                    <div style={{ fontSize: 12.5, marginTop: 3, color: "#ede9fe" }}>{b.nombre}</div>
-                    <div style={{ fontSize: 10.5, marginTop: 2, color: "#9d8fc7" }}>{b.cliente}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#9d8fc7", letterSpacing: 0.5, marginBottom: 10 }}>ESTE MES ({monthProjects.length + monthTasks.length})</div>
-          {monthProjects.length === 0 && monthTasks.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px 20px", color: "#6b5f92", fontSize: 13.5 }}><IAlert size={22} style={{ opacity: 0.4, marginBottom: 8 }} /><div>Nada con fecha este mes.</div></div>
-          ) : (<>
-            {monthProjects.length > 0 && (<>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#7c6ba8", letterSpacing: 0.5, marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}><IBriefcase size={11} /> CLIENTES</div>
-              {monthProjects.map((p) => (<ProjectCard key={p.id} project={p} clientName={clientMap[p.clientId]?.nombre} onEdit={() => { setEditProject(p); setProjectForClient(p.clientId); setShowProjectForm(true); }} onDelete={() => deleteProject(p.id)} />))}
-            </>)}
-            {monthTasks.length > 0 && (<>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#7c6ba8", letterSpacing: 0.5, margin: monthProjects.length > 0 ? "18px 0 8px" : "0 0 8px", display: "flex", alignItems: "center", gap: 5 }}><IGrad size={11} /> ESTUDIO</div>
-              {monthTasks.map((t) => (<TaskCard key={t.id} task={t} onEdit={() => { setEditTask(t); setShowTaskForm(true); }} onDelete={() => deleteTask(t.id)} />))}
-            </>)}
-          </>)}
-          {ongoingTasks.length > 0 && (<>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#9d8fc7", letterSpacing: 0.5, margin: "22px 0 10px" }}>EN CURSO / SIN FECHA</div>
-            {ongoingTasks.map((t) => (<TaskCard key={t.id} task={t} onEdit={() => { setEditTask(t); setShowTaskForm(true); }} onDelete={() => deleteTask(t.id)} />))}
-          </>)}
-        </div>
-      )}
-
-      {tab === "clients" && !selectedClient && (
-        <div style={{ padding: "6px 18px" }}>
-          <div style={{ position: "relative", marginBottom: 12 }}>
-            <ISearch size={15} style={{ position: "absolute", left: 13, top: 13, color: "#6b5f92" }} />
-            <input style={{ ...inputStyle, paddingLeft: 36 }} placeholder="Buscar cliente…" value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
-          <div style={{ display: "flex", gap: 7, marginBottom: 16, overflowX: "auto", paddingBottom: 2 }}>
-            {[["todos", "Todos"], ...Object.entries(CATEGORIA_CLIENTE).map(([k, c]) => [k, c.label])].map(([key, label]) => (
-              <button key={key} onClick={() => setFiltroCategoria(key)} style={{ flexShrink: 0, padding: "7px 13px", borderRadius: 999, fontSize: 12.5, fontWeight: 600, border: filtroCategoria === key ? "1.5px solid #a78bfa" : "1.5px solid rgba(255,255,255,0.1)", background: filtroCategoria === key ? "rgba(167,139,250,0.14)" : "rgba(255,255,255,0.03)", color: filtroCategoria === key ? "#c4b5fd" : "#9d8fc7", cursor: "pointer", whiteSpace: "nowrap" }}>{label}</button>
-            ))}
-          </div>
-          {filteredClients.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "50px 20px", color: "#6b5f92", fontSize: 13.5 }}>{clients.length === 0 ? "Aún no tienes clientes. Agrega el primero." : "No hay clientes en esta categoría."}</div>
-          ) : (
-            filteredClients.map((c) => {
-              const cP = projects.filter((p) => p.clientId === c.id);
-              const urgentes = cP.filter((p) => p.status === "urgente").length;
-              const cat = CATEGORIA_CLIENTE[c.categoria || "activo"];
-              return (
-                <div key={c.id} onClick={() => setSelectedClient(c)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(196,181,253,0.15)", borderRadius: 16, padding: 14, marginBottom: 10, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ fontWeight: 700, fontSize: 15.5 }}>{c.nombre}</div>
-                      <span style={{ fontSize: 10.5, fontWeight: 700, color: cat.color, background: cat.bg, padding: "2px 8px", borderRadius: 999 }}>{cat.label}</span>
-                    </div>
-                    {c.empresa && <div style={{ fontSize: 12.5, color: "#9d8fc7", marginTop: 2 }}>{c.empresa}</div>}
-                    <div style={{ fontSize: 11.5, color: "#6b5f92", marginTop: 5, display: "flex", gap: 10 }}>
-                      <span><IBriefcase size={11} style={{ verticalAlign: -1, marginRight: 3 }} />{cP.length} proyecto{cP.length !== 1 ? "s" : ""}</span>
-                      <span><IUsers size={11} style={{ verticalAlign: -1, marginRight: 3 }} />{c.colaboradores.length}</span>
-                    </div>
-                  </div>
-                  {urgentes > 0 && <span style={{ background: STATUS.urgente.bg, color: STATUS.urgente.color, fontSize: 11, fontWeight: 700, padding: "4px 9px", borderRadius: 999 }}>{urgentes} urgente{urgentes !== 1 ? "s" : ""}</span>}
-                </div>
-              );
-            })
-          )}
-        </div>
-      )}
-
-      {tab === "clients" && selectedClient && (
-        <div style={{ padding: "6px 18px" }}>
-          <button onClick={() => setSelectedClient(null)} style={{ background: "none", border: "none", color: "#a78bfa", fontSize: 13, marginBottom: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0 }}><IChevronL size={15} /> Todos los clientes</button>
-          <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(196,181,253,0.15)", borderRadius: 16, padding: 14, marginBottom: 18 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: CATEGORIA_CLIENTE[selectedClient.categoria || "activo"].color, background: CATEGORIA_CLIENTE[selectedClient.categoria || "activo"].bg, padding: "3px 10px", borderRadius: 999 }}>{CATEGORIA_CLIENTE[selectedClient.categoria || "activo"].label}</span>
-            {selectedClient.empresa && <div style={{ fontSize: 13, color: "#c4b5fd", marginTop: 8 }}>{selectedClient.empresa}</div>}
-            {selectedClient.email && <div style={{ fontSize: 12.5, color: "#9d8fc7", marginTop: 4 }}>{selectedClient.email}</div>}
-            {selectedClient.telefono && <div style={{ fontSize: 12.5, color: "#9d8fc7", marginTop: 2 }}>{selectedClient.telefono}</div>}
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <button onClick={() => { setEditClient(selectedClient); setShowClientForm(true); }} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 10, padding: "9px", color: "#c4b5fd", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>Editar</button>
-              <button onClick={() => deleteClient(selectedClient.id)} style={{ flex: 1, background: "rgba(251,113,133,0.1)", border: "none", borderRadius: 10, padding: "9px", color: "#fb7185", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>Eliminar cliente</button>
-            </div>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#9d8fc7", letterSpacing: 0.5 }}>COLABORADORES</div>
-            <button onClick={() => setShowCollabForm(true)} style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.35)", borderRadius: 10, padding: "5px 10px", color: "#c4b5fd", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}><IPlus size={12} /> Agregar</button>
-          </div>
-          {selectedClient.colaboradores.length === 0 ? (<div style={{ fontSize: 12.5, color: "#6b5f92", marginBottom: 18 }}>Sin colaboradores registrados.</div>) : (
-            <div style={{ marginBottom: 18 }}>
-              {selectedClient.colaboradores.map((col) => (
-                <div key={col.id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(196,181,253,0.1)", borderRadius: 12, padding: "10px 12px", marginBottom: 7, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div><div style={{ fontSize: 13.5, fontWeight: 600 }}>{col.nombre}</div><div style={{ fontSize: 11.5, color: "#9d8fc7" }}>{[col.rol, col.contacto].filter(Boolean).join(" · ")}</div>{col.cumpleanos && <div style={{ fontSize: 11, color: "#fbbf24", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>🎂 {new Date(col.cumpleanos + "T00:00:00").toLocaleDateString("es-HN", { day: "numeric", month: "short" })}</div>}</div>
-                  <button onClick={() => { const updated = { ...selectedClient, colaboradores: selectedClient.colaboradores.filter((x) => x.id !== col.id) }; const nc = clients.map((c) => c.id === selectedClient.id ? updated : c); setClients(nc); setSelectedClient(updated); persist({ clients: nc, projects, tasks }); }} style={{ background: "none", border: "none", color: "#6b5f92", cursor: "pointer" }}><IX size={14} /></button>
-                </div>
-              ))}
-            </div>
-          )}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#9d8fc7", letterSpacing: 0.5 }}>PROYECTOS</div>
-            <button onClick={() => { setEditProject(null); setProjectForClient(selectedClient.id); setShowProjectForm(true); }} style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.35)", borderRadius: 10, padding: "5px 10px", color: "#c4b5fd", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}><IPlus size={12} /> Nuevo</button>
-          </div>
-          {projects.filter((p) => p.clientId === selectedClient.id).length === 0 ? (<div style={{ fontSize: 12.5, color: "#6b5f92" }}>Sin proyectos todavía.</div>) : (
-            projects.filter((p) => p.clientId === selectedClient.id).sort((a, b) => a.fechaEntrega.localeCompare(b.fechaEntrega)).map((p) => (<ProjectCard key={p.id} project={p} onEdit={() => { setEditProject(p); setProjectForClient(selectedClient.id); setShowProjectForm(true); }} onDelete={() => deleteProject(p.id)} />))
-          )}
-        </div>
-      )}
-
-      {tab === "tasks" && (
-        <div style={{ padding: "6px 18px" }}>
-          {tasks.length === 0 ? (<div style={{ textAlign: "center", padding: "50px 20px", color: "#6b5f92", fontSize: 13.5 }}>Aquí van tus cosas del estudio que no son de un cliente: cursos, certificados, pendientes personales. Agrega la primera.</div>) : (
-            tasks.slice().sort((a, b) => (a.fecha || "9999").localeCompare(b.fecha || "9999")).map((t) => (<TaskCard key={t.id} task={t} onEdit={() => { setEditTask(t); setShowTaskForm(true); }} onDelete={() => deleteTask(t.id)} />))
-          )}
-        </div>
-      )}
-
-      {tab === "clients" && !selectedClient && (<button onClick={() => { setEditClient(null); setShowClientForm(true); }} style={{ position: "fixed", bottom: 84, right: 20, width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#8b5cf6,#d946ef)", border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 24px rgba(139,92,246,0.5)", cursor: "pointer", zIndex: 10 }}><IPlus size={24} /></button>)}
-      {tab === "tasks" && (<button onClick={() => { setEditTask(null); setShowTaskForm(true); }} style={{ position: "fixed", bottom: 84, right: 20, width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#8b5cf6,#d946ef)", border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 24px rgba(139,92,246,0.5)", cursor: "pointer", zIndex: 10 }}><IPlus size={24} /></button>)}
-
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(18,11,31,0.92)", backdropFilter: "blur(12px)", borderTop: "1px solid rgba(196,181,253,0.15)", display: "flex", padding: "10px 0 18px" }}>
-        {[{ key: "dashboard", label: "Panorama", icon: ICalendar }, { key: "clients", label: "Clientes", icon: IUsers }, { key: "tasks", label: "Estudio", icon: IGrad }].map(({ key, label, icon: Ic }) => (
-          <button key={key} onClick={() => { setTab(key); setSelectedClient(null); }} style={{ flex: 1, background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, color: tab === key ? "#c4b5fd" : "#6b5f92", cursor: "pointer" }}><Ic size={19} /><span style={{ fontSize: 11, fontWeight: 600 }}>{label}</span></button>
-        ))}
-      </div>
-
-      {showClientForm && <ClientForm initial={editClient} onClose={() => setShowClientForm(false)} onSave={(c) => { const exists = clients.some((x) => x.id === c.id); const next = exists ? clients.map((x) => x.id === c.id ? c : x) : [...clients, c]; saveClients(next); if (selectedClient?.id === c.id) setSelectedClient(c); }} />}
-      {showCollabForm && selectedClient && <CollaboratorForm onClose={() => setShowCollabForm(false)} onSave={(col) => { const updated = { ...selectedClient, colaboradores: [...selectedClient.colaboradores, col] }; const nc = clients.map((c) => c.id === selectedClient.id ? updated : c); saveClients(nc); setSelectedClient(updated); }} />}
-      {showProjectForm && <ProjectForm clientId={projectForClient} initial={editProject} onClose={() => { setShowProjectForm(false); setEditProject(null); }} onSave={(p) => { const exists = projects.some((x) => x.id === p.id); saveProjects(exists ? projects.map((x) => x.id === p.id ? p : x) : [...projects, p]); }} />}
-      {showTaskForm && <TaskForm initial={editTask} onClose={() => { setShowTaskForm(false); setEditTask(null); }} onSave={(t) => { const exists = tasks.some((x) => x.id === t.id); saveTasks(exists ? tasks.map((x) => x.id === t.id ? t : x) : [...tasks, t]); }} />}
-      {showSettings && <SettingsSheet data={{ clients, projects, tasks }} syncState={syncState} onClose={() => setShowSettings(false)} onImport={(d) => { setClients(d.clients); setProjects(d.projects); setTasks(d.tasks); persist(d); }} onLogout={onLogout} />}
     </div>
-  );
-}
+    <div class="wrap">
+      <svg class="ribbon-strip" viewBox="0 0 1200 70" preserveAspectRatio="none" aria-hidden="true" style="margin-top:40px; opacity:0.6;">
+        <defs>
+          <linearGradient id="ribbonGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#7c4dff"/>
+            <stop offset="50%" stop-color="#c3b2ff"/>
+            <stop offset="100%" stop-color="#7c4dff"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,45 C150,10 300,60 450,35 C600,10 750,60 900,35 C1000,18 1100,50 1200,30" fill="none" stroke="url(#ribbonGrad)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </section>
 
-/* ---------- raíz: sesión de Supabase + app ---------- */
-function Root() {
-  const [session, setSession] = useState(undefined);
+  <!-- ---------- KEYWORD BAND ---------- -->
+  <div class="band">
+    <div class="track" aria-hidden="true">
+      <span>Identidad Visual</span><span>Diseño Digital</span><span>Material Impreso</span><span>Diseño Editorial</span><span>Community Manager</span><span>Branding &amp; Estrategia</span>
+      <span>Identidad Visual</span><span>Diseño Digital</span><span>Material Impreso</span><span>Diseño Editorial</span><span>Community Manager</span><span>Branding &amp; Estrategia</span>
+    </div>
+  </div>
 
-  useEffect(() => {
-    sb.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: sub } = sb.auth.onAuthStateChange((_event, sess) => setSession(sess));
-    return () => sub.subscription.unsubscribe();
-  }, []);
+  <!-- ---------- SERVICIOS (tarjetas) ---------- -->
+  <section id="servicios">
+    <div class="wrap">
+      <div class="section-head center">
+        <p class="eyebrow">Servicios</p>
+        <h2>Lo que puedo hacer por tu marca</h2>
+        <p>Seis formas de trabajar juntos, desde el primer logo hasta el contenido que sostiene tu presencia todos los días.</p>
+      </div>
+      <div class="services-carousel">
+        <div class="services-track">
+          <div class="sc-card">
+            <div class="s-icon"><svg viewBox="0 0 24 24"><path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z" stroke-linejoin="round"/></svg></div>
+            <h3>Identidad visual</h3>
+            <p>Logotipo, paleta, tipografía y manual de marca completo.</p>
+            <button class="read-more" data-service="identidad" style="background:none;border:none;cursor:pointer;padding:0;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--lilac);">Leer más →</button>
+          </div>
+          <div class="sc-card">
+            <div class="s-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4" stroke-linecap="round"/></svg></div>
+            <h3>Diseño digital</h3>
+            <p>Piezas para redes, web y presentaciones pensadas para tu audiencia.</p>
+            <button class="read-more" data-service="digital" style="background:none;border:none;cursor:pointer;padding:0;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--lilac);">Leer más →</button>
+          </div>
+          <div class="sc-card">
+            <div class="s-icon"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a1 1 0 01-1-1v-6a1 1 0 011-1h16a1 1 0 011 1v6a1 1 0 01-1 1h-2M6 14h12v7H6z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Material impreso</h3>
+            <p>Tarjetas, folletos, empaques y señalética que se sostienen en papel.</p>
+            <button class="read-more" data-service="impreso" style="background:none;border:none;cursor:pointer;padding:0;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--lilac);">Leer más →</button>
+          </div>
+          <div class="sc-card">
+            <div class="s-icon"><svg viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-1v13c3-1 6-.5 8 1 2-1.5 5-2 8-1V5c-3-1-6-.5-8 1zM12 6v13" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Diseño editorial</h3>
+            <p>Revistas, catálogos y reportes con una lectura clara y cómoda.</p>
+            <button class="read-more" data-service="editorial" style="background:none;border:none;cursor:pointer;padding:0;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--lilac);">Leer más →</button>
+          </div>
+          <div class="sc-card">
+            <div class="s-icon"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Community manager</h3>
+            <p>Calendario y diseño de contenido para que tu marca hable todos los días.</p>
+            <button class="read-more" data-service="community" style="background:none;border:none;cursor:pointer;padding:0;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--lilac);">Leer más →</button>
+          </div>
+          <div class="sc-card">
+            <div class="s-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-4 2-2 4 4-2 2-4z" stroke-linejoin="round"/></svg></div>
+            <h3>Branding &amp; estrategia</h3>
+            <p>Diagnóstico de marca y plan de acción hacia dónde va tu marca.</p>
+            <button class="read-more" data-service="branding" style="background:none;border:none;cursor:pointer;padding:0;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--lilac);">Leer más →</button>
+          </div>
+          <!-- Duplicado para loop continuo -->
+          <div class="sc-card">
+            <div class="s-icon"><svg viewBox="0 0 24 24"><path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z" stroke-linejoin="round"/></svg></div>
+            <h3>Identidad visual</h3>
+            <p>Logotipo, paleta, tipografía y manual de marca completo.</p>
+            <button class="read-more" data-service="identidad" style="background:none;border:none;cursor:pointer;padding:0;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--lilac);">Leer más →</button>
+          </div>
+          <div class="sc-card">
+            <div class="s-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4" stroke-linecap="round"/></svg></div>
+            <h3>Diseño digital</h3>
+            <p>Piezas para redes, web y presentaciones pensadas para tu audiencia.</p>
+            <button class="read-more" data-service="digital" style="background:none;border:none;cursor:pointer;padding:0;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--lilac);">Leer más →</button>
+          </div>
+          <div class="sc-card">
+            <div class="s-icon"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a1 1 0 01-1-1v-6a1 1 0 011-1h16a1 1 0 011 1v6a1 1 0 01-1 1h-2M6 14h12v7H6z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Material impreso</h3>
+            <p>Tarjetas, folletos, empaques y señalética que se sostienen en papel.</p>
+            <button class="read-more" data-service="impreso" style="background:none;border:none;cursor:pointer;padding:0;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--lilac);">Leer más →</button>
+          </div>
+          <div class="sc-card">
+            <div class="s-icon"><svg viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-1v13c3-1 6-.5 8 1 2-1.5 5-2 8-1V5c-3-1-6-.5-8 1zM12 6v13" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Diseño editorial</h3>
+            <p>Revistas, catálogos y reportes con una lectura clara y cómoda.</p>
+            <button class="read-more" data-service="editorial" style="background:none;border:none;cursor:pointer;padding:0;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--lilac);">Leer más →</button>
+          </div>
+          <div class="sc-card">
+            <div class="s-icon"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Community manager</h3>
+            <p>Calendario y diseño de contenido para que tu marca hable todos los días.</p>
+            <button class="read-more" data-service="community" style="background:none;border:none;cursor:pointer;padding:0;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--lilac);">Leer más →</button>
+          </div>
+          <div class="sc-card">
+            <div class="s-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-4 2-2 4 4-2 2-4z" stroke-linejoin="round"/></svg></div>
+            <h3>Branding &amp; estrategia</h3>
+            <p>Diagnóstico de marca y plan de acción hacia dónde va tu marca.</p>
+            <button class="read-more" data-service="branding" style="background:none;border:none;cursor:pointer;padding:0;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--lilac);">Leer más →</button>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:40px;">
+        <a href="servicios.html" class="btn primary">Ver todos los servicios</a>
+      </div>
+    </div>
+  </section>
 
-  if (session === undefined) return <div style={{ minHeight: "100vh", background: "#150e24" }} />;
-  if (!session) return <AuthGate onAuth={() => {}} />;
-  return <App userId={session.user.id} onLogout={() => sb.auth.signOut()} />;
-}
+  <!-- ---------- TESTIMONIOS ---------- -->
+  <section class="testi-wrap">
+    <div class="wrap">
+      <div class="section-head center">
+        <p class="eyebrow" style="color:var(--lilac);">Reseñas</p>
+        <h2>Lo que dicen mis clientes</h2>
+        <p style="color:#c9cfd8;">Reseñas verificadas de Google.</p>
+      </div>
+      <div class="testi-grid" id="testiGrid">
+        <div class="t-card">
+          <div class="stars">★★★★★</div>
+          <p>"Excelente servicio de diseño de manual de marca y otros servicios de diseño gráfico."</p>
+          <div class="who">
+            <div class="avatar">J</div>
+            <div>
+              <b>Joaquín Tabora</b>
+              <span>Google · hace 9 horas</span>
+            </div>
+          </div>
+        </div>
+        <div class="t-card">
+          <div class="stars">★★★★★</div>
+          <p>"Es una persona que entiende y comprende la idea de su cliente y la demuestra con su trabajo de calidad, ordena, dinámica, estética, y transparencia en toda la plenitud de su trabajo."</p>
+          <div class="who">
+            <div class="avatar">M</div>
+            <div>
+              <b>Melvin José Aguilar Moreira</b>
+              <span>Google · hace 23 horas</span>
+            </div>
+          </div>
+        </div>
+        <div class="t-card">
+          <div class="stars">★★★★★</div>
+          <p>"Excelente servicio, gran trabajo."</p>
+          <div class="who">
+            <div class="avatar">G</div>
+            <div>
+              <b>German Vargas</b>
+              <span>Google · hace 16 semanas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:36px;">
+        <a href="https://g.page/r/CZHohuVDrqeMEAE/review" target="_blank" rel="noopener" class="btn" style="border-color:rgba(255,255,255,0.4); color:#fff;">Ver más en Google</a>
+      </div>
+    </div>
+  </section>
 
-ReactDOM.createRoot(document.getElementById("root")).render(sb ? <Root /> : <SetupNeeded />);
-</script>
+  <!-- ---------- CTA (pequeño, la página completa está en Contacto) ---------- -->
+  <section class="cta-band small">
+    <div class="wrap">
+      <h2>Hablemos de tu marca</h2>
+      <p>Cuéntame en qué estás trabajando.</p>
+      <a href="contacto.html" class="btn">Ir a contacto</a>
+    </div>
+  </section>
 
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <img src="assets/logo-horizontal.png" alt="Geovana Alemán, logotipo horizontal">
+      <div class="foot-links">
+        <a href="index.html">Inicio</a>
+        <a href="sobre-mi.html">Sobre mí</a>
+        <a href="portafolio.html">Portafolio</a>
+        <a href="servicios.html">Servicios</a>
+        <a href="blog.html">Blog</a>
+        <a href="contacto.html">Contacto</a>
+      </div>
+      <div class="social-row">
+        <a class="icon-btn" href="https://instagram.com/cecigeo25" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 2 .3 2.5.5.6.2 1 .5 1.5 1 .5.5.7.8 1 1.5.2.5.4 1.3.5 2.5.1 1.2.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.3 2-.5 2.5-.2.6-.5 1-1 1.5-.5.5-.9.7-1.5 1-.5.2-1.3.4-2.5.5-1.2.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-2-.3-2.5-.5-.6-.2-1-.5-1.5-1-.5-.5-.7-.9-1-1.5-.2-.5-.4-1.3-.5-2.5C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.3-2 .5-2.5.2-.6.5-1 1-1.5.5-.5.9-.7 1.5-1 .5-.2 1.3-.4 2.5-.5C9.4 2.2 9.8 2.2 12 2.2zM12 7a5 5 0 100 10 5 5 0 000-10zm0 8.2a3.2 3.2 0 110-6.4 3.2 3.2 0 010 6.4zm5.2-8.4a1.2 1.2 0 100-2.4 1.2 1.2 0 000 2.4z"/></svg></a>
+<a class="icon-btn" href="https://www.facebook.com/cecia.aleman.1" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24"><path d="M13.5 21v-7.6h2.6l.4-3h-3v-1.9c0-.9.2-1.5 1.5-1.5h1.6V4.3C15.9 4.2 15 4.1 14 4.1c-2.4 0-4 1.4-4 4.1v2.3H7.4v3H10V21h3.5z"/></svg></a>
+<a class="icon-btn" href="https://www.linkedin.com/in/geovana-aleman" target="_blank" rel="noopener" aria-label="LinkedIn"><svg viewBox="0 0 24 24"><path d="M6.9 8.4H3.6V20h3.3V8.4zM5.3 3.5a1.9 1.9 0 100 3.8 1.9 1.9 0 000-3.8zM20.4 20h-3.3v-6.1c0-1.5-.5-2.5-1.8-2.5-1 0-1.6.7-1.9 1.4-.1.2-.1.6-.1.9V20h-3.3s.1-10.6 0-11.6h3.3v1.6c.4-.7 1.2-1.7 3-1.7 2.2 0 3.9 1.5 3.9 4.6V20z"/></svg></a>
+<a class="icon-btn" href="https://www.behance.net/ceciagaleman1" target="_blank" rel="noopener" aria-label="Behance"><svg viewBox="0 0 24 24"><path d="M7.8 10.4c.9 0 1.6-.2 2.1-.6.5-.4.8-1 .8-1.9 0-.5-.1-.9-.3-1.2-.2-.3-.4-.6-.8-.8-.3-.2-.7-.3-1.1-.4-.4-.1-.9-.1-1.4-.1H2.5v11.4h4.9c.5 0 1-.1 1.5-.2.5-.1.9-.3 1.2-.5.4-.2.6-.6.8-1 .2-.4.3-.9.3-1.5 0-.7-.2-1.3-.5-1.8-.4-.5-.9-.8-1.6-.9v-.5zM4.9 6.9h2c.4 0 .8.1 1 .3.3.2.4.5.4.9 0 .4-.1.7-.4.9-.3.2-.6.3-1 .3H4.9V6.9zm2.3 8.2H4.9v-2.9h2.3c.5 0 .9.1 1.2.3.3.2.4.6.4 1s-.1.8-.4 1c-.3.2-.7.3-1.2.3zM17.7 8.6c-1.4 0-2.6.5-3.4 1.4-.8.9-1.2 2.1-1.2 3.6 0 1.6.4 2.8 1.3 3.7.9.9 2 1.3 3.5 1.3 1.1 0 2.1-.3 2.9-.8.8-.5 1.3-1.3 1.6-2.3h-2.1c-.1.4-.4.7-.7.9-.3.2-.7.3-1.2.3-.7 0-1.2-.2-1.6-.6-.4-.4-.6-1-.6-1.7h6.4c0-1.7-.4-3-1.2-4-.8-.9-1.9-1.4-3.3-1.4h-.4zm-1.9 3.9c.1-.6.3-1 .6-1.4.3-.3.8-.5 1.4-.5.5 0 1 .2 1.3.5.3.3.5.8.6 1.4h-3.9zM13.6 7.2h6.3V6h-6.3z"/></svg></a>
+      </div>
+    </div>
+    <p class="foot-copy">© 2026 Geovana Alemán · Diseño gráfico y branding</p>
+  </div>
+</footer>
+<div class="svc-overlay" id="svcOverlay">
+  <div class="svc-panel">
+    <button class="svc-panel-close" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="s-icon"></div>
+    <h3 class="svc-panel-title"></h3>
+    <p class="svc-panel-desc"></p>
+    <div class="svc-ideal"><b>Ideal para</b><span class="svc-panel-ideal"></span></div>
+    <div class="svc-cta"><a href="contacto.html" class="btn primary">Hablemos de tu proyecto</a></div>
+  </div>
+</div>
+<div class="wa-widget">
+  <div class="wa-bubble">¡Hola! Soy Geovana 👋<br>Contrata mis servicios</div>
+  <a class="wa-avatar-btn" href="https://wa.me/50496318885?text=Hola%20Geovana%2C%20quiero%20contratar%20tus%20servicios" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp a Geovana">
+    <img src="assets/wa-avatar.png" alt="Geovana Alemán">
+    <span class="wa-badge"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.5A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 1 1-2.9-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.2-.3.2-.5.1-.2-.1-1-.4-1.9-1.2-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5.1-.1.2-.3.4-.4.1-.1.2-.2.2-.4.1-.1 0-.3 0-.4-.1-.1-.5-1.2-.7-1.7-.2-.4-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9s.8 2.2 1 2.4c.1.2 1.6 2.5 3.9 3.4.5.2 1 .4 1.3.5.5.2 1 .1 1.4.1.4-.1 1.4-.6 1.6-1.1.2-.5.2-1 .1-1.1-.1-.1-.2-.1-.4-.2z"/></svg></span>
+  </a>
+</div>
+<script src="script.js"></script>
 <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  /* ============================================================
+     RESEÑAS AUTOMÁTICAS DE GOOGLE
+     1. Reemplaza GOOGLE_MAPS_API_KEY con tu llave de Google Cloud.
+     2. Reemplaza GOOGLE_PLACE_ID con el Place ID de tu negocio.
+     3. Si algo falla (llave no configurada, sin internet, etc.) las
+        3 reseñas que ya están escritas en el HTML se quedan tal cual,
+        así el sitio nunca se ve roto.
+     ============================================================ */
+  var GOOGLE_MAPS_API_KEY = 'GOOGLE_MAPS_API_KEY';
+  var GOOGLE_PLACE_ID = 'GOOGLE_PLACE_ID';
+
+  function renderGoogleReviews(place) {
+    if (!place || !place.reviews || !place.reviews.length) return;
+    var grid = document.getElementById('testiGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    place.reviews.slice(0, 3).forEach(function (r) {
+      var stars = '★★★★★☆☆☆☆☆'.slice(5 - r.rating, 10 - r.rating);
+      var initial = (r.author_name || '?').charAt(0).toUpperCase();
+      var card = document.createElement('div');
+      card.className = 't-card reveal in';
+      card.innerHTML =
+        '<div class="stars">' + stars + '</div>' +
+        '<p>"' + r.text + '"</p>' +
+        '<div class="who">' +
+          '<div class="avatar">' + initial + '</div>' +
+          '<div><b>' + r.author_name + '</b><span>Google · ' + r.relative_time_description + '</span></div>' +
+        '</div>';
+      grid.appendChild(card);
+    });
+  }
+
+  function initGoogleReviews() {
+    if (GOOGLE_MAPS_API_KEY === 'GOOGLE_MAPS_API_KEY' || GOOGLE_PLACE_ID === 'GOOGLE_PLACE_ID') return;
+    try {
+      var service = new google.maps.places.PlacesService(document.createElement('div'));
+      service.getDetails({ placeId: GOOGLE_PLACE_ID, fields: ['reviews', 'rating', 'user_ratings_total'] }, function (place, status) {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          renderGoogleReviews(place);
+        }
+      });
+    } catch (e) { /* si algo falla, se quedan las reseñas escritas a mano */ }
   }
 </script>
+<script async src="https://maps.googleapis.com/maps/api/js?key=GOOGLE_MAPS_API_KEY&libraries=places&callback=initGoogleReviews"></script>
+
 </body>
 </html>
