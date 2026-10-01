@@ -1208,3 +1208,32 @@ footer{ padding:56px 0 34px; border-top:1px solid var(--line); }
   .wa-bubble{ max-width:150px; font-size:12.5px; padding:10px 13px; }
   .wa-avatar-btn{ width:54px; height:54px; flex-basis:54px; }
 }
+
+/* ---------- Tienda ---------- */
+.shop-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:26px; }
+.shop-card{
+  border:1px solid var(--line); border-radius:20px; overflow:hidden;
+  background:rgba(255,255,255,0.035); transition:transform .3s ease, box-shadow .3s ease;
+}
+.shop-card:hover{ transform:translateY(-6px); box-shadow:0 20px 44px -18px rgba(124,77,255,0.4); }
+.shop-thumb{
+  aspect-ratio:4/3; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(150deg, var(--deep), var(--violet) 70%, var(--lilac));
+  position:relative;
+}
+.shop-thumb svg{ width:34px; height:34px; stroke:#fff; fill:none; stroke-width:1.5; opacity:0.85; }
+.shop-soon{
+  position:absolute; top:14px; right:14px; background:rgba(8,7,15,0.7); backdrop-filter:blur(6px);
+  color:#fff; font-size:10.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+  padding:6px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.2);
+}
+.shop-body{ padding:22px 24px; }
+.shop-body h3{ font-family:'Fraunces',serif; font-weight:600; font-size:18px; margin-bottom:8px; }
+.shop-body p{ font-size:13.5px; color:var(--muted); margin-bottom:14px; }
+.shop-price{ font-family:'Fraunces',serif; font-weight:600; font-size:15px; color:var(--lilac); }
+.shop-section-tab{
+  display:inline-block; padding:8px 18px; border-radius:999px; font-size:12.5px; font-weight:700;
+  background:var(--tint); color:var(--lilac); margin-bottom:14px;
+}
+@media (max-width:860px){ .shop-grid{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:560px){ .shop-grid{ grid-template-columns:1fr; } }
