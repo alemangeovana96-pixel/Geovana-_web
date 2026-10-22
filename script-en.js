@@ -184,3 +184,34 @@ document.addEventListener('DOMContentLoaded', function () {
     if (e.key === 'Escape') closeServiceDetail();
   });
 });
+
+
+/* ---------- Compartir artículo ---------- */
+document.addEventListener('DOMContentLoaded', function () {
+  var buttons = document.querySelectorAll('[data-share]');
+  if (!buttons.length) return;
+  var toast = document.querySelector('.share-toast');
+  function showToast(text) {
+    if (!toast) return;
+    toast.textContent = text; toast.classList.add('show');
+    setTimeout(function () { toast.classList.remove('show'); }, 4000);
+  }
+  buttons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var net = btn.getAttribute('data-share');
+      var link = window.location.href.split('#')[0];
+      var url = encodeURIComponent(link);
+      if (net === 'linkedin') {
+        window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + url, '_blank', 'noopener,width=640,height=600');
+      } else if (net === 'facebook') {
+        window.open('https://www.facebook.com/sharer/sharer.php?u=' + url, '_blank', 'noopener,width=640,height=600');
+      } else if (net === 'instagram') {
+        if (navigator.share) {
+          navigator.share({ title: document.title, url: link }).catch(function () {});
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(link).then(function () { showToast("Link copied. Paste it into your Instagram story or post."); });
+        }
+      }
+    });
+  });
+});
