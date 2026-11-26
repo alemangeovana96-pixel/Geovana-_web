@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /agenda/
+
+Sitemap: https://geovanaleman.com/sitemap.xml

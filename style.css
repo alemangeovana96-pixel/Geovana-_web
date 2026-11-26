@@ -664,7 +664,7 @@ footer{ padding:56px 0 34px; border-top:1px solid var(--line); }
   font-family:'Fraunces',serif; font-style:italic; font-weight:500;
   font-size:clamp(28px,3.6vw,44px); color:var(--lilac); line-height:1; display:block;
 }
-.dark-hero h1{
+.dark-hero .h1{
   font-family:'Fraunces',serif; font-weight:700;
   font-size:clamp(48px,7vw,88px); line-height:0.95; margin:2px 0 22px;
   color:#fff;
@@ -766,12 +766,12 @@ footer{ padding:56px 0 34px; border-top:1px solid var(--line); }
 @media (max-width:640px){ .skills-cols{ grid-template-columns:1fr; gap:28px; } }
 
 /* ---------- Más animación en la portada ---------- */
-.dark-hero .script, .dark-hero h1, .dark-hero p.lead, .dark-hero .hero-ctas{
+.dark-hero .script, .dark-hero .h1, .dark-hero p.lead, .dark-hero .hero-ctas{
   opacity:0; transform:translateY(18px);
   animation: heroIn .8s ease forwards;
 }
 .dark-hero .script{ animation-delay:.1s; }
-.dark-hero h1{ animation-delay:.22s; }
+.dark-hero .h1{ animation-delay:.22s; }
 .dark-hero p.lead{ animation-delay:.36s; }
 .dark-hero .hero-ctas{ animation-delay:.5s; }
 @keyframes heroIn{ to{ opacity:1; transform:translateY(0); } }
@@ -779,7 +779,7 @@ footer{ padding:56px 0 34px; border-top:1px solid var(--line); }
 @keyframes heroFloat{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-14px);} }
 @keyframes heroFadeIn{ from{ opacity:0; transform:scale(.94);} to{ opacity:1; transform:scale(1);} }
 @media (prefers-reduced-motion: reduce){
-  .dark-hero .script, .dark-hero h1, .dark-hero p.lead, .dark-hero .hero-ctas{ animation:none; opacity:1; transform:none; }
+  .dark-hero .script, .dark-hero .h1, .dark-hero p.lead, .dark-hero .hero-ctas{ animation:none; opacity:1; transform:none; }
   .dark-frame-wrap img{ animation:none; }
 }
 
@@ -1245,3 +1245,10 @@ footer{ padding:56px 0 34px; border-top:1px solid var(--line); }
 .share-row button.icon-btn{ cursor:pointer; font:inherit; }
 .share-toast{ font-size:13px; color:var(--lilac); opacity:0; transition:opacity .3s ease; }
 .share-toast.show{ opacity:1; }
+
+/* Portadas de blog con diseño propio (nov 2026) */
+.blog-card .blog-thumb{ aspect-ratio:2/1; }
+.blog-card .blog-thumb::after{ display:none; }
+
+/* SEO: H1 real con nombre y ciudad (nov 2026) */
+.dark-hero .hero-kicker{ color:var(--lilac); margin:0 0 18px; font-size:12.5px; line-height:1.5; font-weight:700; }
